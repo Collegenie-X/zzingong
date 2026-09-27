@@ -2,17 +2,41 @@
 // 첫 실행 시 src/data/subjects.json 시드 과목과
 // 더미 학생/세션(반 평균 비교용)을 자동 생성합니다.
 
-import seedSubjects from '@/data/subjects.json';
+import planConfig from '@/data/subjects.json';
 import { generateComment } from '../comment';
 import { generateDummyData } from '../dummy';
 import { todayStr } from '../format';
 import { shortId } from '../random';
 import { buildDashboard } from '../stats';
 import { KEYS, clearAll, readJSON, writeJSON } from '../storage';
-import type { DoneState, SessionRecord, Student, Subject } from '../types';
+import type { DoneState, SessionRecord, Student, Subject, SubjectInput } from '../types';
 import type { StudyApi } from './types';
 
 // ── 내부 헬퍼 ──
+
+const seedSubjects = planConfig.subjects as Subject[];
+
+/** 과목 추가/수정 입력값 검증 후 정규화 */
+function normalizeInput(
+  input: SubjectInput,
+  subjects: Subject[],
+  excludeName?: string,
+): { error: string } | { value: SubjectInput } {
+  const name = input.name.trim();
+  if (!name) return { error: '과목 이름을 입력해주세요' };
+  if (name.length > 12) return { error: '과목 이름은 12자 이하로 입력해주세요' };
+  if (subjects.some((s) => s.name === name && s.name !== excludeName))
+    return { error: '이미 있는 과목입니다' };
+
+  const goal = Math.round(Number(input.goal_minutes));
+  if (!Number.isFinite(goal) || goal < 5 || goal > 600)
+    return { error: '목표 시간은 5분 ~ 600분 사이로 입력해주세요' };
+
+  const color = input.color.trim();
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return { error: '색상 형식이 올바르지 않습니다' };
+
+  return { value: { name, goal_minutes: goal, color } };
+}
 
 function loadSubjects(): Subject[] {
   return readJSON<Subject[]>(KEYS.subjects, []);
@@ -80,6 +104,60 @@ export const localApi: StudyApi = {
   async getSubjects() {
     ensureSeed();
     return [...loadSubjects()].sort((a, b) => a.sort_order - b.sort_order);
+  },
+
+  async addSubject(input) {
+    ensureSeed();
+    const subjects = loadSubjects();
+    const check = normalizeInput(input, subjects);
+    if ('error' in check) return { ok: false, error: check.error };
+
+    const subject: Subject = {
+      ...check.value,
+      done: 0,
+      sort_order: subjects.reduce((max, s) => Math.max(max, s.sort_order), -1) + 1,
+    };
+    subjects.push(subject);
+    writeJSON(KEYS.subjects, subjects);
+    return { ok: true, subject };
+  },
+
+  async editSubject(name, input) {
+    const subjects = loadSubjects();
+    const target = subjects.find((s) => s.name === name);
+    if (!target) return { ok: false, error: '과목을 찾을 수 없습니다' };
+
+    const check = normalizeInput(input, subjects, name);
+    if ('error' in check) return { ok: false, error: check.error };
+
+    // 이름이 바뀌면 지난 기록도 함께 옮겨 통계가 끊기지 않게 합니다.
+    if (check.value.name !== name) {
+      const sessions = loadSessions();
+      let touched = false;
+      for (const rec of sessions) {
+        if (rec.subject === name) {
+          rec.subject = check.value.name;
+          touched = true;
+        }
+      }
+      if (touched) writeJSON(KEYS.sessions, sessions);
+    }
+
+    Object.assign(target, check.value);
+    writeJSON(KEYS.subjects, subjects);
+    return { ok: true, subject: { ...target } };
+  },
+
+  async deleteSubject(name) {
+    const subjects = loadSubjects();
+    if (!subjects.some((s) => s.name === name))
+      return { ok: false, error: '과목을 찾을 수 없습니다' };
+    // 계획에서만 빼고 공부 기록은 남겨 둡니다.
+    const next = subjects
+      .filter((s) => s.name !== name)
+      .map((s, i) => ({ ...s, sort_order: i }));
+    writeJSON(KEYS.subjects, next);
+    return { ok: true };
   },
 
   async reorderSubjects(order) {

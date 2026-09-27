@@ -58,6 +58,11 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
   const [currentTag, setCurrentTag] = useState<Tag | null>(null);
   const [badge, setBadge] = useState<{ text: string; cls: string }>({ text: '집중 중', cls: 'ok' });
   const [logs, setLogs] = useState<{ time: string; msg: string }[]>([]);
+  /** 딴짓이 시작된 순간의 스냅샷 (이 브라우저 메모리에만 보관, 업로드/저장 없음) */
+  const [shots, setShots] = useState<{ id: number; time: string; tag: Tag; url: string }[]>([]);
+  const [viewShot, setViewShot] = useState<string | null>(null);
+  const shotCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const shotIdRef = useRef(0);
 
   // rAF 루프에서 최신 값을 읽기 위한 미러 ref
   const distractionsRef = useRef<Distractions>(ZERO);
@@ -80,6 +85,34 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
     setLogs((prev) => [{ time, msg }, ...prev].slice(0, 15));
   }, []);
 
+  // ── 딴짓 순간 스냅샷 ──
+  // 지금의 내 모습을 보여 주는 게 목적이라 작게(240px) 저장하고 최근 12장만 남깁니다.
+  const captureShot = useCallback((tag: Tag) => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return;
+    const canvas = (shotCanvasRef.current ??= document.createElement('canvas'));
+    const w = 240;
+    const h = Math.round((video.videoHeight / video.videoWidth) * w);
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    // 화면에 보이는 것과 같도록 좌우 반전해서 담습니다
+    ctx.save();
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, w, h);
+    ctx.restore();
+    let url: string;
+    try {
+      url = canvas.toDataURL('image/jpeg', 0.6);
+    } catch {
+      return; // 웹캠 미연결 등
+    }
+    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    setShots((prev) => [{ id: shotIdRef.current++, time, tag, url }, ...prev].slice(0, 12));
+  }, []);
+
   const setTag = useCallback(
     (tag: Tag | null) => {
       currentTagRef.current = tag;
@@ -100,8 +133,9 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
       if (cur) addLog(`${TAG_NAMES[cur]} 종료`);
       setTag(tag);
       addLog(`${TAG_NAMES[tag]} 시작`);
+      captureShot(tag);
     },
-    [addLog, setTag],
+    [addLog, captureShot, setTag],
   );
 
   // ── 딴짓 시간 누적 (타이머 실행 중 + 태그 활성 시 1초마다) ──
@@ -140,6 +174,8 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
     setTag(null);
     setBadge({ text: '집중 중', cls: 'ok' });
     setLogs([]);
+    setShots([]);
+    setViewShot(null);
 
     const drawOverlay = (w: number, h: number) => {
       const tagged = currentTagRef.current !== null;
@@ -332,6 +368,39 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
           </div>
         </div>
       </div>
+      {shots.length > 0 && (
+        <div className="shot-strip">
+          <div className="shot-strip-head">
+            <span>딴짓 순간 {shots.length}장</span>
+            <span className="hint">이 컴퓨터에만 남고, 종료하면 사라집니다</span>
+          </div>
+          <div className="shot-thumbs">
+            {shots.map((sh) => (
+              <button
+                key={sh.id}
+                className="shot-thumb"
+                onClick={() => setViewShot(sh.url)}
+                title={`${sh.time} ${TAG_NAMES[sh.tag]}`}
+              >
+                {/* 사용자의 웹캠에서 만든 data URL 이라 next/image 대신 img 사용 */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={sh.url} alt={`${sh.time} ${TAG_NAMES[sh.tag]} 순간`} />
+                <span className="shot-tag">{TAG_META.find((t) => t.tag === sh.tag)?.icon}</span>
+                <span className="shot-time">{sh.time}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {viewShot && (
+        <div className="shot-viewer" role="dialog" aria-label="딴짓 순간 사진" onClick={() => setViewShot(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={viewShot} alt="딴짓 순간 사진 크게 보기" />
+          <p>지금 이 모습, 기억해 두세요. 닫으려면 아무 곳이나 누르세요.</p>
+        </div>
+      )}
+
       <div className="monitor-log">
         {logs.map((l, i) => (
           <div className="entry" key={`${l.time}-${i}`}>

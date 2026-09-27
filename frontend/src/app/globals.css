@@ -15,12 +15,70 @@ nav.top-nav {
   display: flex; justify-content: space-between; align-items: center;
   border-bottom: 2px solid #0f3460;
 }
-nav.top-nav .logo { font-size: 1.2rem; font-weight: 700; color: #e94560; }
+nav.top-nav .logo { display: flex; align-items: center; line-height: 0; }
+nav.top-nav .logo img { height: 32px; width: auto; display: block; }
 nav.top-nav .nav-links a {
   color: #a0a0c0; text-decoration: none; margin-left: 24px;
   font-weight: 500; transition: color 0.2s;
 }
 nav.top-nav .nav-links a:hover, nav.top-nav .nav-links a.active { color: #e94560; }
+
+/* ── 타이머 시작 CTA (우측 상단 강조 버튼) ── */
+nav.top-nav .nav-links { display: flex; align-items: center; }
+nav.top-nav .nav-links a.nav-cta {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-left: 20px; padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem; font-weight: 700;
+  color: #fff;
+  background: linear-gradient(100deg, #e94560, #f97316);
+  box-shadow: 0 8px 22px -10px rgba(233, 69, 96, 0.95);
+  transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+}
+nav.top-nav .nav-links a.nav-cta .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+  animation: nav-cta-pulse 1.6s ease-in-out infinite;
+}
+nav.top-nav .nav-links a.nav-cta .arrow { transition: transform 0.2s; }
+nav.top-nav .nav-links a.nav-cta:hover {
+  color: #fff; transform: translateY(-1px); filter: brightness(1.08);
+  box-shadow: 0 12px 26px -10px rgba(233, 69, 96, 1);
+}
+nav.top-nav .nav-links a.nav-cta:hover .arrow { transform: translateX(3px); }
+
+/* 타이머 화면에서는 "현재 위치" 상태로 */
+nav.top-nav .nav-links a.nav-cta.current {
+  color: #e94560;
+  background: rgba(233, 69, 96, 0.1);
+  border: 1px solid rgba(233, 69, 96, 0.55);
+  box-shadow: none;
+  padding: 7px 15px;
+}
+nav.top-nav .nav-links a.nav-cta.current:hover { transform: none; filter: none; }
+
+@keyframes nav-cta-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.7); }
+}
+
+@media (max-width: 560px) {
+  nav.top-nav { padding: 10px 14px; }
+  nav.top-nav .logo img { height: 26px; }
+  nav.top-nav .nav-links a { margin-left: 14px; font-size: 0.82rem; }
+  nav.top-nav .nav-links a.nav-cta { margin-left: 12px; padding: 7px 12px; font-size: 0.78rem; }
+  nav.top-nav .nav-links a.nav-cta .dot { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  nav.top-nav .nav-links a.nav-cta .dot { animation: none; }
+}
+nav.top-nav .nav-links { display: flex; align-items: center; white-space: nowrap; }
+@media (max-width: 480px) {
+  nav.top-nav { padding: 10px 16px; }
+  nav.top-nav .logo img { height: 24px; }
+  nav.top-nav .nav-links a { margin-left: 12px; font-size: 0.85rem; }
+}
 
 /* ── 학생 선택 바 ── */
 .student-bar {

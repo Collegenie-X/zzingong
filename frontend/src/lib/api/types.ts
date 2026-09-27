@@ -10,6 +10,7 @@ import type {
   SessionRecord,
   Student,
   Subject,
+  SubjectInput,
 } from '../types';
 
 export interface ApiResult {
@@ -24,8 +25,11 @@ export interface StudyApi {
   editStudent(id: string, name: string): Promise<ApiResult>;
   deleteStudent(id: string): Promise<ApiResult>;
 
-  // 과목  (GET /api/subjects, POST /api/subjects/{reorder,toggle_done})
+  // 과목  (GET /api/subjects, POST /api/subjects/{add,edit,delete,reorder,toggle_done})
   getSubjects(): Promise<Subject[]>;
+  addSubject(input: SubjectInput): Promise<ApiResult & { subject?: Subject }>;
+  editSubject(name: string, input: SubjectInput): Promise<ApiResult & { subject?: Subject }>;
+  deleteSubject(name: string): Promise<ApiResult>;
   reorderSubjects(order: string[]): Promise<ApiResult>;
   toggleDone(name: string, studentId: string): Promise<ApiResult & { done?: DoneState; status?: string }>;
 

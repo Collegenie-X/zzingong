@@ -102,12 +102,6 @@
 .plan-done-label.completed { color: #4CAF50; }
 .plan-done-label.skipped { color: #FFC107; }
 
-.plan-total {
-  text-align: center; margin-top: 8px; padding-top: 8px;
-  border-top: 1px solid #1a1a40;
-  font-size: 0.75rem; color: #666;
-}
-.plan-total strong { color: #e94560; }
 .plan-hint { text-align: center; font-size: 0.7rem; color: #555; margin-top: 8px; }
 
 /* ── 타이머 ── */
@@ -252,3 +246,286 @@
 }
 .monitor-log .entry { padding: 2px 0; border-bottom: 1px solid #1a1a40; }
 .monitor-log .entry .t { color: #e94560; margin-right: 4px; }
+
+/* ── 오늘 한눈에 보기 (상단 요약 바) ── */
+.today-summary-bar {
+  max-width: 1000px;
+  margin: 8px auto 0;
+  padding: 14px 18px;
+  background: linear-gradient(180deg, #16213e, #141c35);
+  border: 1px solid #1a1a40;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.today-summary-bar .tsb-main { flex: 1; min-width: 0; }
+.tsb-head { display: flex; align-items: baseline; gap: 10px; }
+.tsb-head .lbl {
+  font-size: 0.7rem; color: #a0a0c0;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.tsb-head .goal { font-size: 0.7rem; color: #666; }
+.tsb-value {
+  font-size: 1.5rem; font-weight: 700; color: #e0e0e0;
+  display: flex; align-items: baseline; gap: 10px; margin: 2px 0 8px;
+}
+.tsb-value em { font-style: normal; font-size: 0.9rem; color: #4CAF50; font-weight: 700; }
+.tsb-track { height: 6px; background: #0f0f23; border-radius: 3px; overflow: hidden; }
+.tsb-track .fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #4CAF50, #8bc34a);
+  transition: width 0.6s ease;
+}
+
+.tsb-stats { display: flex; gap: 18px; flex-shrink: 0; }
+.tsb-stat { text-align: center; min-width: 52px; }
+.tsb-stat .v { font-size: 1rem; font-weight: 700; color: #e0e0e0; }
+.tsb-stat .v.warn { color: #f44336; }
+.tsb-stat .v .of { font-size: 0.75rem; color: #666; font-weight: 500; }
+.tsb-stat .k { font-size: 0.6rem; color: #888; margin-top: 2px; }
+
+/* 학생 미선택 안내 */
+.today-summary-bar.guide { gap: 14px; }
+.today-summary-bar .guide-icon { font-size: 1.4rem; }
+.today-summary-bar .guide-text { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.today-summary-bar .guide-text strong { font-size: 0.9rem; color: #e0e0e0; }
+.today-summary-bar .guide-text span { font-size: 0.75rem; color: #888; }
+.today-summary-bar .guide-link {
+  font-size: 0.75rem; color: #e94560; text-decoration: none;
+  border: 1px solid #e94560; border-radius: 999px; padding: 6px 14px;
+  white-space: nowrap; transition: background 0.2s, color 0.2s;
+}
+.today-summary-bar .guide-link:hover { background: #e94560; color: #fff; }
+
+@media (max-width: 780px) {
+  .today-summary-bar { flex-direction: column; align-items: stretch; gap: 14px; margin: 8px 16px 0; }
+  .tsb-stats { justify-content: space-between; }
+  .today-summary-bar.guide { flex-direction: row; flex-wrap: wrap; }
+}
+
+/* ── 측정 중인 타이머 카드 강조 ── */
+.timer-section { transition: border-color 0.3s, box-shadow 0.3s; }
+.timer-section.running {
+  border-color: rgba(76, 175, 80, 0.55);
+  box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.12), 0 14px 38px -22px rgba(76, 175, 80, 0.8);
+}
+.timer-section.running .timer-display { animation: timer-tick 2s ease-in-out infinite; }
+@keyframes timer-tick {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.82; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timer-section.running .timer-display { animation: none; }
+}
+
+/* ── 과목 CRUD ── */
+.plan-header-actions { display: flex; gap: 6px; align-items: center; }
+.plan-add-btn {
+  font-size: 0.65rem; padding: 3px 9px; border-radius: 6px;
+  border: 1px solid #3b82f6; background: none; color: #3b82f6;
+  cursor: pointer; white-space: nowrap; font-family: inherit; font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+.plan-add-btn:hover { background: #3b82f6; color: #fff; }
+
+.plan-item { position: relative; }
+.plan-actions {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  display: flex; gap: 3px; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #1a1a40 22%);
+  padding-left: 18px; border-radius: 8px;
+  transition: opacity 0.15s;
+}
+.plan-item:hover .plan-actions,
+.plan-item:focus-within .plan-actions { opacity: 1; pointer-events: auto; }
+.plan-item.selected .plan-actions { background: linear-gradient(90deg, transparent, #1e1535 22%); }
+.plan-act-btn {
+  width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+  border: 1px solid #333; background: #0f0f23; color: #94a3b8;
+  font-size: 0.7rem; line-height: 1; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.plan-act-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+.plan-act-btn.del:hover { border-color: #ef4444; color: #ef4444; }
+
+/* 터치 기기에는 hover 가 없어 항상 보여줍니다. */
+@media (hover: none) {
+  .plan-actions { position: static; transform: none; opacity: 1; pointer-events: auto;
+    background: none; padding-left: 0; }
+  .plan-time-range { min-width: 62px; }
+}
+
+.plan-empty {
+  text-align: center; padding: 18px 8px; font-size: 0.8rem; color: #666;
+}
+.plan-empty-add {
+  border: 1px solid #3b82f6; background: none; color: #3b82f6;
+  border-radius: 6px; padding: 4px 10px; margin-left: 6px;
+  font-size: 0.75rem; cursor: pointer; font-family: inherit;
+}
+.plan-empty-add:hover { background: #3b82f6; color: #fff; }
+
+/* ── 예상 시각: 자정 이내 파랑 / 자정 넘김 빨강 ── */
+.plan-time-range .end { color: #3b82f6; font-weight: 600; }
+.plan-time-range .end.past-midnight { color: #ef4444; }
+.plan-item.done .plan-time-range .end,
+.plan-item.skipped .plan-time-range .end { color: #555; }
+
+/* ── 계획 총 시간 요약 + 목표 대비 막대 그래프 ── */
+.plan-summary {
+  margin-top: 10px; padding: 12px 14px;
+  background: #0f0f23; border: 1px solid #1a1a40; border-radius: 12px;
+}
+.ps-top { display: flex; align-items: center; gap: 9px; }
+.ps-emoji { flex-shrink: 0; display: block; }
+.ps-value {
+  font-size: 1.6rem; font-weight: 800; line-height: 1.1;
+  color: #60a5fa; font-variant-numeric: tabular-nums;
+}
+.ps-value.over { color: #ef4444; }
+.ps-end {
+  margin-left: auto; display: flex; align-items: center; gap: 4px;
+  font-size: 0.95rem; font-weight: 700; color: #60a5fa;
+  font-variant-numeric: tabular-nums;
+}
+.ps-end.past-midnight { color: #ef4444; }
+.ps-moon { display: block; }
+
+.ps-track {
+  position: relative; height: 16px; margin: 10px 0 6px;
+  background: #16213e; border-radius: 8px; overflow: hidden;
+  display: flex;
+}
+.ps-fill { height: 100%; transition: width 0.45s ease; }
+.ps-fill.within { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.ps-fill.over { background: linear-gradient(90deg, #ef4444, #f87171); }
+.ps-fill.short {
+  background: repeating-linear-gradient(
+    -45deg, rgba(96, 165, 250, 0.18) 0 5px, transparent 5px 10px
+  );
+}
+.ps-target-line {
+  position: absolute; top: -2px; bottom: -2px; width: 2px;
+  background: #e0e0e0; border-radius: 1px;
+  box-shadow: 0 0 0 1px rgba(15, 15, 35, 0.9);
+}
+
+.ps-legend {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; font-size: 0.68rem;
+}
+.ps-target-key { color: #8892b0; display: flex; align-items: center; gap: 5px; }
+.ps-target-key::before {
+  content: ''; width: 2px; height: 10px; background: #e0e0e0; border-radius: 1px;
+}
+.ps-diff { font-weight: 700; color: #8892b0; white-space: nowrap; }
+.ps-diff.over { color: #ef4444; }
+.ps-diff.short { color: #60a5fa; }
+
+/* ── 과목 추가/수정 모달 ── */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(7, 7, 20, 0.72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal {
+  width: 100%; max-width: 340px;
+  background: #16213e; border: 1px solid #263257; border-radius: 16px;
+  padding: 20px; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  max-height: 100%; overflow-y: auto;
+}
+.modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; color: #e0e0e0; }
+.modal-label {
+  display: block; font-size: 0.65rem; color: #8892b0;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+}
+.modal-input {
+  width: 100%; padding: 9px 11px; margin-bottom: 12px;
+  background: #0f0f23; border: 1px solid #263257; border-radius: 8px;
+  color: #e0e0e0; font-size: 0.9rem; font-family: inherit;
+}
+.modal-input:focus { outline: none; border-color: #3b82f6; }
+
+.modal-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: -6px 0 14px; }
+.modal-chip {
+  padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid #263257; background: #0f0f23; color: #94a3b8;
+  font-size: 0.7rem; font-family: inherit; transition: all 0.15s;
+}
+.modal-chip:hover { border-color: #3b82f6; color: #3b82f6; }
+.modal-chip.active { border-color: #3b82f6; background: #3b82f6; color: #fff; }
+
+.modal-swatches {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin-bottom: 14px;
+}
+.modal-swatch {
+  width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; padding: 0; transition: transform 0.12s;
+}
+.modal-swatch:hover { transform: scale(1.12); }
+.modal-swatch.active { border-color: #e0e0e0; box-shadow: 0 0 0 2px #16213e inset; }
+
+.modal-error {
+  font-size: 0.72rem; color: #ef4444; margin-bottom: 10px;
+  background: rgba(239, 68, 68, 0.12); border-radius: 6px; padding: 7px 9px;
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-btn {
+  padding: 8px 18px; border-radius: 9px; cursor: pointer;
+  font-size: 0.82rem; font-weight: 600; font-family: inherit;
+  border: 1px solid transparent; transition: opacity 0.15s;
+}
+.modal-btn:hover { opacity: 0.85; }
+.modal-btn.ghost { background: none; border-color: #334166; color: #94a3b8; }
+.modal-btn.primary { background: #3b82f6; color: #fff; }
+
+/* ── 딴짓 순간 사진 ── */
+.shot-strip {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #1a1a40;
+}
+.shot-strip-head {
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px;
+}
+.shot-strip-head span:first-child { font-size: 0.7rem; color: #e94560; font-weight: 700; }
+.shot-strip-head .hint { font-size: 0.6rem; color: #555; }
+.shot-thumbs {
+  display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.shot-thumb {
+  position: relative; flex-shrink: 0;
+  width: 86px; padding: 0; border: 1px solid #2a2a50;
+  border-radius: 8px; overflow: hidden; background: #0a0a1a;
+  cursor: pointer; line-height: 0; transition: border-color 0.2s, transform 0.12s;
+}
+.shot-thumb:hover { border-color: #e94560; transform: translateY(-2px); }
+.shot-thumb img { width: 100%; height: auto; display: block; }
+.shot-thumb .shot-tag {
+  position: absolute; top: 3px; left: 3px;
+  font-size: 0.65rem; line-height: 1;
+  background: rgba(0, 0, 0, 0.6); border-radius: 5px; padding: 3px 4px;
+}
+.shot-thumb .shot-time {
+  position: absolute; bottom: 0; right: 0;
+  font-size: 0.55rem; color: #ddd; line-height: 1;
+  background: rgba(0, 0, 0, 0.65); padding: 3px 5px; border-radius: 5px 0 0 0;
+}
+
+.shot-viewer {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: rgba(8, 8, 20, 0.88);
+  padding: 24px; cursor: zoom-out;
+  border: none; width: 100%;
+}
+.shot-viewer img {
+  max-width: min(560px, 90vw); max-height: 70vh;
+  border-radius: 14px; border: 2px solid #e94560;
+  box-shadow: 0 24px 60px -24px rgba(233, 69, 96, 0.9);
+}
+.shot-viewer p { font-size: 0.82rem; color: #ccc; text-align: center; }

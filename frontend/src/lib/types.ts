@@ -19,6 +19,13 @@ export interface Subject {
   sort_order: number;
 }
 
+/** 과목 추가/수정 입력값 (sort_order·done 은 서버/스토어가 관리) */
+export interface SubjectInput {
+  name: string;
+  goal_minutes: number;
+  color: string;
+}
+
 export interface Distractions {
   phone: number;
   spacing: number;

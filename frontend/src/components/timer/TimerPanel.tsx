@@ -60,12 +60,14 @@ export default function TimerPanel({
   }
 
   return (
-    <div className="card timer-section">
+    <div className={`card timer-section${running ? ' running' : ''}`}>
       <div className="selected-subject" style={{ color: subject?.color ?? '#555' }}>
         {subject ? subject.name : '과목을 선택하세요'}
       </div>
       <div className="timer-schedule">{schedule}</div>
-      <div className="timer-display">{fmtHMS(elapsed)}</div>
+      <div className="timer-display" style={running ? { color: subject?.color ?? '#e0e0e0' } : undefined}>
+        {fmtHMS(elapsed)}
+      </div>
       <div className="timer-progress">
         <div className={`bar${over ? ' over' : ''}`} style={{ width: `${over ? 100 : progress}%` }} />
       </div>

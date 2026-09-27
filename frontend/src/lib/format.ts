@@ -22,6 +22,16 @@ export function fmtKorean(sec: number): string {
   return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`;
 }
 
+/** 분 → "N시간 M분" / "M분" / "N시간" */
+export function fmtMinKorean(min: number): string {
+  const sign = min < 0 ? '-' : '';
+  const v = Math.abs(Math.round(min));
+  const h = Math.floor(v / 60);
+  const m = v % 60;
+  if (h === 0) return `${sign}${m}분`;
+  return m === 0 ? `${sign}${h}시간` : `${sign}${h}시간 ${m}분`;
+}
+
 /** 분 → "Nh Mm" / "Mm" */
 export function fmtMin(m: number): string {
   return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60 > 0 ? (m % 60) + 'm' : ''}` : `${m}m`;
