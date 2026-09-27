@@ -6,7 +6,7 @@
 }
 .datetime-header .date { font-size: 1rem; color: #999; }
 .datetime-header .time {
-  font-size: 1.8rem; font-weight: 700; color: #e94560;
+  font-size: clamp(1.5rem, 7vw, 1.8rem); font-weight: 700; color: #e94560;
   font-variant-numeric: tabular-nums;
 }
 .datetime-header .remaining { font-size: 0.75rem; color: #555; margin-top: 2px; }
@@ -131,10 +131,12 @@
 
 /* ── 타이머 ── */
 .timer-section { text-align: center; }
-.selected-subject { font-size: 1.4rem; font-weight: 700; min-height: 1.6em; }
+.selected-subject { font-size: clamp(1.15rem, 5vw, 1.4rem); font-weight: 700; min-height: 1.6em; }
 .timer-schedule { font-size: 0.8rem; color: #888; margin-bottom: 10px; min-height: 1.2em; }
 .timer-display {
-  font-size: 4.5rem; font-weight: 700;
+  /* 08:00:00 여덟 글자가 좁은 화면에서도 한 줄에 들어오도록 */
+  font-size: clamp(2.5rem, 13vw, 4.5rem);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   margin: 8px 0; letter-spacing: 2px;
 }
@@ -148,10 +150,11 @@
 }
 .timer-progress .bar.over { background: #f44336; }
 .timer-sub { font-size: 0.8rem; color: #888; margin-bottom: 16px; min-height: 1.2em; }
-.timer-buttons { display: flex; gap: 12px; justify-content: center; }
+.timer-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .btn {
   padding: 12px 32px; border: none; border-radius: 12px;
   font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap;
   transition: opacity 0.2s, transform 0.1s;
   color: #fff; font-family: inherit;
 }
@@ -317,6 +320,7 @@
 .today-summary-bar .guide-text strong { font-size: 0.9rem; color: #e0e0e0; }
 .today-summary-bar .guide-text span { font-size: 0.75rem; color: #888; }
 .today-summary-bar .guide-link {
+  align-self: center; flex-shrink: 0;
   font-size: 0.75rem; color: #e94560; text-decoration: none;
   border: 1px solid #e94560; border-radius: 999px; padding: 6px 14px;
   white-space: nowrap; transition: background 0.2s, color 0.2s;
@@ -554,3 +558,89 @@
   box-shadow: 0 24px 60px -24px rgba(233, 69, 96, 0.9);
 }
 .shot-viewer p { font-size: 0.82rem; color: #ccc; text-align: center; }
+
+
+/* ══════════════════════════════════════════════
+   타이머 화면 반응형
+   ══════════════════════════════════════════════ */
+
+/* 태블릿 이하: 1단 배치 (위쪽 .timer-main 규칙과 함께 동작) */
+@media (max-width: 780px) {
+  .timer-main { padding: 12px 14px 24px; gap: 14px; }
+  .datetime-header { padding: 14px 14px 4px; }
+}
+
+/* 휴대폰 */
+@media (max-width: 600px) {
+  .card { padding: 14px; border-radius: 12px; }
+  .card-header { margin-bottom: 10px; }
+  .card-header h2 { font-size: 0.78rem; letter-spacing: 0.5px; }
+
+  /* ── 오늘 한눈에 보기 ── */
+  .today-summary-bar { padding: 13px 14px; }
+  .tsb-value { font-size: 1.35rem; }
+  .tsb-stats { gap: 10px; }
+  .tsb-stat { min-width: 0; flex: 1; }
+  .today-summary-bar.guide { flex-direction: column; align-items: stretch; text-align: left; }
+  .today-summary-bar .guide-link { align-self: flex-start; }
+
+  /* ── 과목 목록 ──
+     좁은 화면에서는 드래그 손잡이를 숨기고 (터치는 길게 눌러 정렬하지 않음)
+     이름 / 시간을 우선 보여 줍니다. */
+  .plan-item { padding: 10px 8px; gap: 7px; }
+  .drag-handle { display: none; }
+  .plan-name { font-size: 0.9rem; }
+  .plan-minutes { font-size: 0.65rem; padding: 2px 6px; }
+  .plan-time-range { font-size: 0.62rem; min-width: 0; }
+  .plan-done-btn { width: 22px; height: 22px; }
+  .plan-act-btn { width: 26px; height: 26px; }
+
+  /* 한 줄에 다 넣으면 이름이 잘리므로, 예정 시각만 둘째 줄로 내립니다.
+     (order 로 순서를 바꿔 수정/삭제 버튼은 첫 줄에 남깁니다) */
+  .plan-item { flex-wrap: wrap; row-gap: 2px; }
+  .plan-time-range {
+    order: 1; flex-basis: 100%;
+    text-align: left; padding-left: 30px;
+  }
+  .plan-actions { order: 0; }
+
+  .ps-value { font-size: 1.35rem; }
+  .ps-end { font-size: 0.85rem; }
+  .ps-legend { font-size: 0.64rem; }
+
+  /* ── 타이머 ── */
+  .timer-buttons { gap: 8px; }
+  .btn { padding: 12px 0; font-size: 0.9rem; flex: 1; min-width: 92px; }
+
+  /* ── 모니터링: 두 칸을 한 칸으로 ── */
+  .monitor-grid { grid-template-columns: 1fr; gap: 14px; }
+  .webcam-box { aspect-ratio: 16 / 10; }
+  .tag-buttons { grid-template-columns: repeat(4, 1fr); }
+  .tag-btn { padding: 8px 4px; font-size: 0.66rem; }
+  .dist-bar-label { width: 56px; font-size: 0.66rem; }
+
+  /* ── 오늘 기록 표 ── */
+  .today-log table { font-size: 0.72rem; }
+  .today-log th, .today-log td { padding: 5px 4px; }
+  .today-summary { gap: 12px; }
+
+  /* ── 모달: 화면 아래쪽에서 올라오는 시트 형태 ── */
+  .modal-backdrop { padding: 0; align-items: flex-end; }
+  .modal {
+    max-width: none; border-radius: 18px 18px 0 0;
+    max-height: 88vh; padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .modal-btn { flex: 1; padding: 11px 12px; }
+  /* iOS 는 16px 미만 입력칸에 포커스가 가면 화면을 자동으로 확대합니다 */
+  .modal-input { font-size: 16px; padding: 11px; }
+  .modal-swatches { grid-template-columns: repeat(8, 1fr); }
+}
+
+/* 아주 좁은 화면 (380px 이하) */
+@media (max-width: 380px) {
+  .plan-minutes { font-size: 0.62rem; }
+  .plan-time-range { padding-left: 26px; }
+  .tsb-stats { gap: 6px; }
+  .tsb-stat .v { font-size: 0.9rem; }
+  .btn { min-width: 0; font-size: 0.85rem; }
+}

@@ -1,12 +1,19 @@
 /* ── 공통 스타일 (원본 index.html / dashboard.css 의 공유 부분) ── */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html { -webkit-text-size-adjust: 100%; }
+
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: #0f0f23;
   color: #e0e0e0;
   min-height: 100vh;
+  /* 어느 화면에서도 가로 스크롤이 생기지 않도록 */
+  overflow-x: hidden;
 }
+
+/* 이미지/표 등이 좁은 화면을 밀어내지 않도록 */
+img, svg, video, canvas { max-width: 100%; }
 
 /* ── 상단 네비게이션 ── */
 nav.top-nav {
@@ -18,16 +25,16 @@ nav.top-nav {
 nav.top-nav .logo { display: flex; align-items: center; line-height: 0; }
 nav.top-nav .logo img { height: 32px; width: auto; display: block; }
 nav.top-nav .nav-links a {
-  color: #a0a0c0; text-decoration: none; margin-left: 24px;
+  color: #a0a0c0; text-decoration: none;
   font-weight: 500; transition: color 0.2s;
 }
 nav.top-nav .nav-links a:hover, nav.top-nav .nav-links a.active { color: #e94560; }
 
 /* ── 타이머 시작 CTA (우측 상단 강조 버튼) ── */
-nav.top-nav .nav-links { display: flex; align-items: center; }
+nav.top-nav .nav-links { display: flex; align-items: center; gap: 24px; }
 nav.top-nav .nav-links a.nav-cta {
   display: inline-flex; align-items: center; gap: 7px;
-  margin-left: 20px; padding: 8px 16px;
+  padding: 8px 16px;
   border-radius: 999px;
   font-size: 0.85rem; font-weight: 700;
   color: #fff;
@@ -62,22 +69,46 @@ nav.top-nav .nav-links a.nav-cta.current:hover { transform: none; filter: none; 
   50% { opacity: 0.45; transform: scale(0.7); }
 }
 
-@media (max-width: 560px) {
-  nav.top-nav { padding: 10px 14px; }
-  nav.top-nav .logo img { height: 26px; }
-  nav.top-nav .nav-links a { margin-left: 14px; font-size: 0.82rem; }
-  nav.top-nav .nav-links a.nav-cta { margin-left: 12px; padding: 7px 12px; font-size: 0.78rem; }
-  nav.top-nav .nav-links a.nav-cta .dot { display: none; }
+/* ── 네비게이션 반응형 ──
+   로고는 줄이고, 링크 줄은 가로 스크롤로 흘려 보냅니다.
+   (줄바꿈으로 네비 높이가 커지면 본문이 아래로 밀리기 때문) */
+nav.top-nav { gap: 12px; }
+nav.top-nav .logo { flex-shrink: 0; }
+nav.top-nav .nav-links {
+  white-space: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+nav.top-nav .nav-links::-webkit-scrollbar { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   nav.top-nav .nav-links a.nav-cta .dot { animation: none; }
 }
-nav.top-nav .nav-links { display: flex; align-items: center; white-space: nowrap; }
-@media (max-width: 480px) {
-  nav.top-nav { padding: 10px 16px; }
+
+@media (max-width: 900px) {
+  nav.top-nav { padding: 11px 16px; }
+  nav.top-nav .nav-links { gap: 18px; }
+  nav.top-nav .logo img { height: 28px; }
+}
+
+@media (max-width: 640px) {
+  nav.top-nav { padding: 10px 14px; gap: 10px; }
   nav.top-nav .logo img { height: 24px; }
-  nav.top-nav .nav-links a { margin-left: 12px; font-size: 0.85rem; }
+  nav.top-nav .nav-links { gap: 14px; font-size: 0.85rem; }
+  nav.top-nav .nav-links a { font-size: 0.85rem; }
+  nav.top-nav .nav-links a.nav-cta { padding: 6px 12px; font-size: 0.78rem; }
+  nav.top-nav .nav-links a.nav-cta .dot { display: none; }
+  nav.top-nav .nav-links a.nav-cta .arrow { display: none; }
+}
+
+@media (max-width: 400px) {
+  nav.top-nav { padding: 9px 12px; }
+  nav.top-nav .logo img { height: 21px; }
+  nav.top-nav .nav-links { gap: 11px; }
+  nav.top-nav .nav-links a { font-size: 0.8rem; }
+  nav.top-nav .nav-links a.nav-cta { padding: 5px 10px; font-size: 0.74rem; }
 }
 
 /* ── 학생 선택 바 ── */
@@ -99,3 +130,25 @@ nav.top-nav .nav-links { display: flex; align-items: center; white-space: nowrap
 .student-bar .stu-btn.del { border-color: #e94560; color: #e94560; }
 .student-bar .stu-btn.del:hover { background: #e94560; color: #fff; }
 .student-bar .stu-count { color: #64748b; font-size: 0.75rem; }
+
+/* ── 학생 선택 바 반응형 ──
+   버튼 글자가 세로로 쪼개지지 않게 하고, 넘치면 가로로 밀어 봅니다. */
+.student-bar {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.student-bar::-webkit-scrollbar { display: none; }
+.student-bar select,
+.student-bar .stu-btn,
+.student-bar .stu-count { flex-shrink: 0; white-space: nowrap; }
+.student-bar select { max-width: 45vw; }
+
+@media (max-width: 640px) {
+  .student-bar { padding: 8px 14px; gap: 8px; font-size: 0.8rem; }
+  /* iOS 자동 확대 방지를 위해 16px 유지 */
+  .student-bar select { padding: 6px 8px; font-size: 16px; }
+  /* 손가락으로 누를 수 있는 최소 높이 확보 */
+  .student-bar .stu-btn { padding: 6px 10px; font-size: 0.72rem; min-height: 30px; }
+}

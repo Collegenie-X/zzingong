@@ -186,16 +186,25 @@
 .stage-nav {
   position: sticky;
   top: 0;
-  z-index: 20;
-  background: rgba(15, 15, 35, 0.82);
-  backdrop-filter: blur(10px);
+  /* 본문(z-index: 1)보다 확실히 위. 붙어 있는 동안 본문이 비쳐 보이지 않도록 배경을 불투명하게 */
+  z-index: 30;
+  background: #0f0f23;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 .stage-nav.stuck {
-  background: rgba(13, 13, 30, 0.92);
+  background: #0d0d1e;
   border-bottom-color: rgba(233, 69, 96, 0.35);
   box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.95);
+}
+/* 블러를 쓸 수 있는 환경에서만 살짝 투명하게 (webkit 접두사 없으면 Safari에서 그냥 비쳐 보임) */
+@supports ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+  .stage-nav {
+    background: rgba(15, 15, 35, 0.92);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+  }
+  .stage-nav.stuck { background: rgba(13, 13, 30, 0.95); }
 }
 .stage-nav-sentinel { height: 0; }
 
@@ -489,4 +498,45 @@
   .stage-nav.stuck .stage-nav-cta .dot,
   .hero-art .key-ring-focus,
   .hero-art .key-escape { animation: none; }
+}
+
+/* ══════════════════════════════════════════════
+   소개 화면 반응형 보강
+   ══════════════════════════════════════════════ */
+
+@media (max-width: 720px) {
+  .about-hero .sub { font-size: 0.92rem; line-height: 1.8; }
+  .stage-lead { font-size: 0.9rem; line-height: 1.85; }
+  .about .btn-primary,
+  .about .btn-ghost { padding: 12px 22px; font-size: 0.86rem; }
+  .stage-nav a { padding: 6px 11px; font-size: 0.74rem; }
+}
+
+@media (max-width: 480px) {
+  .about-hero { padding: 48px 18px 40px; }
+  .about-hero .eyebrow { font-size: 0.66rem; letter-spacing: 2px; margin-bottom: 14px; }
+  .about-hero .sub { margin-top: 16px; font-size: 0.88rem; line-height: 1.75; }
+
+  /* 두 버튼을 세로로 쌓아 누르기 쉽게 */
+  .hero-cta { flex-direction: column; gap: 8px; margin-top: 24px; }
+  .about .btn-primary,
+  .about .btn-ghost { display: block; text-align: center; }
+  .hero-chips { margin-top: 24px; gap: 6px; }
+  .hero-chips span { font-size: 0.68rem; padding: 5px 10px; }
+  .scroll-hint { margin-top: 34px; }
+
+  .stage { padding: 52px 18px; }
+  .stage-lead { font-size: 0.88rem; }
+  .stage-art { margin-top: 26px; padding: 10px; }
+  .fake-list li { padding: 11px 13px; font-size: 0.82rem; }
+  .rhythm-list li,
+  .gap-table li,
+  .steps li { padding: 12px 13px; }
+  .rhythm-list span { font-size: 0.8rem; }
+  .shot-callout { padding: 15px; }
+  .note { font-size: 0.76rem; padding-left: 12px; }
+
+  .about-outro { padding: 72px 18px 90px; }
+  .outro-sub { font-size: 0.85rem; }
+  .outro-foot { margin-top: 40px; font-size: 0.64rem; letter-spacing: 1.5px; }
 }

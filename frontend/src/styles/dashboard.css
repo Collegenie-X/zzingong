@@ -115,3 +115,73 @@
 .tip-card .tc-head { font-size: 0.72rem; font-weight: 700; margin-bottom: 4px; }
 .tip-card .tc-body { font-size: 0.7rem; color: #94a3b8; line-height: 1.6; }
 .tip-card .tc-body strong { color: #cbd5e1; }
+
+/* ══════════════════════════════════════════════
+   대시보드 반응형
+   ══════════════════════════════════════════════ */
+
+/* 과목 탭은 좁은 화면에서 가로로 스크롤됩니다 (스크롤바는 숨김) */
+.subj-tabs { scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+.subj-tabs::-webkit-scrollbar { display: none; }
+.period-tabs { flex-wrap: wrap; }
+
+/* 차트는 고정 높이 대신 화면 높이에 맞춰 조금 줄어듭니다 */
+.chart-area { height: clamp(200px, 42vw, 260px); }
+.compare-chart { height: clamp(190px, 40vw, 240px); }
+.rpt-chart-area { height: clamp(160px, 34vw, 180px); }
+
+@media (max-width: 768px) {
+  .dash-main { padding: 16px 14px 28px; }
+  .dash-card { padding: 14px; border-radius: 10px; }
+
+  .ov-row { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 7px; }
+  .ov { padding: 12px 8px; }
+  .ov .v { font-size: 1.2rem; }
+  .ov .l { font-size: 0.66rem; }
+  .ov .sub { font-size: 0.6rem; }
+
+  .section-title { font-size: 0.78rem; letter-spacing: 0.5px; }
+  .subj-tab { padding: 7px 13px; font-size: 0.8rem; }
+  .period-tab { padding: 5px 11px; font-size: 0.74rem; }
+
+  /* 보고서 */
+  .rpt-hdr { padding: 16px 16px; }
+  .rpt-hdr .rh-row { flex-wrap: wrap; gap: 4px; }
+  .rpt-hdr .rh-title { font-size: 1rem; }
+  .rpt-body { padding: 16px 14px; }
+  .rpt-sec { margin-bottom: 20px; }
+
+  .grade-banner { padding: 16px; gap: 12px; }
+  .grade-banner .gb-left { width: auto; }
+  .grade-banner .gb-msg { font-size: 0.75rem; }
+
+  .kpi-row { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
+  .kpi { padding: 10px 6px; }
+  .kpi .kv { font-size: 1.05rem; }
+
+  /* 반 순위 막대: 라벨/차이 표시를 줄여 막대 자리를 확보합니다 */
+  .rank-bar { gap: 7px; margin-bottom: 16px; }
+  .rank-bar .rb-label { width: 28px; font-size: 0.72rem; }
+  .rank-bar .rb-diff { width: 56px; font-size: 0.68rem; }
+  .rank-bar .rb-track { height: 24px; }
+  .rank-bar .rb-me { width: 26px; height: 26px; font-size: 0.62rem; }
+
+  .gap-legend { gap: 10px; font-size: 0.68rem; }
+  .legend-row { gap: 12px; font-size: 0.7rem; }
+
+  .ai-box { padding: 14px; }
+  .ai-box .ai-p { font-size: 0.75rem; line-height: 1.75; }
+
+  /* 표는 좁은 화면에서 가로 스크롤 */
+  .rpt-table-wrap, .rpt-sec { overflow-x: auto; }
+  .rpt-table { min-width: 420px; }
+  .rpt-table th, .rpt-table td { padding: 7px 6px; }
+  .rpt-table td { font-size: 0.74rem; }
+  .rpt-table .prog { width: 56px; }
+}
+
+@media (max-width: 400px) {
+  .dash-main { padding: 14px 10px 24px; }
+  .ov-row { grid-template-columns: 1fr 1fr; }
+  .ov .v { font-size: 1.1rem; }
+}

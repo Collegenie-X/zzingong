@@ -48,3 +48,40 @@
 .data-table td { padding: 6px 10px; border-bottom: 1px solid #1a1a40; color: #cbd5e1; }
 .data-table .empty { color: #444; text-align: center; padding: 20px; }
 .data-meta { font-size: 0.72rem; color: #64748b; margin-top: 8px; }
+
+/* ══════════════════════════════════════════════
+   데이터 화면 반응형
+   ══════════════════════════════════════════════ */
+
+/* 표 탭은 가로 스크롤 (스크롤바 숨김) */
+.table-tabs {
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+.table-tabs::-webkit-scrollbar { display: none; }
+.table-tab { flex-shrink: 0; white-space: nowrap; }
+.data-btn { white-space: nowrap; }
+.data-search { flex: 1; min-width: 0; }
+
+@media (max-width: 768px) {
+  .data-main { padding: 16px 14px 28px; }
+  .data-toolbar { gap: 6px; }
+  /* 빈 공간 채우기용 spacer 는 줄바꿈된 화면에서 오히려 방해가 됩니다 */
+  .data-toolbar .spacer { display: none; }
+  .data-btn { padding: 7px 11px; font-size: 0.75rem; }
+  /* iOS 자동 확대 방지를 위해 16px 유지 */
+  .data-search { padding: 7px 10px; font-size: 16px; min-width: 140px; }
+
+  .data-card { padding: 12px; border-radius: 10px; }
+  .data-card h3 { font-size: 0.74rem; letter-spacing: 0.5px; }
+  .table-tab { padding: 7px 13px; font-size: 0.8rem; }
+  .data-table { font-size: 0.72rem; }
+  .data-table th, .data-table td { padding: 6px 8px; }
+  .data-meta { font-size: 0.68rem; }
+}
+
+@media (max-width: 400px) {
+  .data-main { padding: 14px 10px 24px; }
+  /* 버튼이 두 개씩 나란히 오도록 */
+  .data-toolbar .data-btn { flex: 1 1 calc(50% - 3px); text-align: center; }
+}

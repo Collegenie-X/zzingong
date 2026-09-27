@@ -14,6 +14,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#16213e',
+  width: 'device-width',
+  initialScale: 1,
+  // 확대/축소는 접근성을 위해 막지 않습니다.
+  maximumScale: 5,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
