@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 164" width="340" height="164" role="img" aria-label="ZZINGONG AI">
+  <defs>
+    <linearGradient id="zg-s" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#312E81"/>
+    </linearGradient>
+  </defs>
+
+  <!-- mark -->
+  <g transform="translate(122 8)">
+    <rect width="96" height="96" rx="22" fill="url(#zg-s)"/>
+    <circle cx="48" cy="48" r="28" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="7"/>
+    <path d="M48 20A28 28 0 1 1 21.37 56.65" fill="none" stroke="#22D3EE" stroke-width="7" stroke-linecap="round"/>
+    <path d="M54 26L36 52H46L42 70L60 44H50Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- wordmark -->
+  <g transform="translate(8 124) scale(0.75)" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#0F172A">
+      <path d="M0 0H30L0 40H30"/>
+      <path d="M46 0H76L46 40H76"/>
+      <path d="M92 0V40"/>
+      <path d="M108 40V0L138 40V0"/>
+      <path d="M189.3 7.14A20 20 0 1 0 194 20H180"/>
+      <circle cx="230" cy="20" r="20"/>
+      <path d="M266 40V0L296 40V0"/>
+      <path d="M347.3 7.14A20 20 0 1 0 352 20H338"/>
+    </g>
+    <g stroke="#4F46E5">
+      <path d="M386 40L401 0L416 40"/>
+      <path d="M392.4 23H409.6"/>
+      <path d="M432 0V40"/>
+    </g>
+  </g>
+</svg>

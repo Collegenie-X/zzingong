@@ -1,0 +1,43 @@
+/* ── 공통 스타일 (원본 index.html / dashboard.css 의 공유 부분) ── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0f0f23;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+/* ── 상단 네비게이션 ── */
+nav.top-nav {
+  background: #16213e;
+  padding: 12px 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 2px solid #0f3460;
+}
+nav.top-nav .logo { font-size: 1.2rem; font-weight: 700; color: #e94560; }
+nav.top-nav .nav-links a {
+  color: #a0a0c0; text-decoration: none; margin-left: 24px;
+  font-weight: 500; transition: color 0.2s;
+}
+nav.top-nav .nav-links a:hover, nav.top-nav .nav-links a.active { color: #e94560; }
+
+/* ── 학생 선택 바 ── */
+.student-bar {
+  background: #16213e; border-bottom: 1px solid #1a1a40;
+  padding: 8px 24px; display: flex; align-items: center; gap: 12px;
+  font-size: 0.85rem;
+}
+.student-bar label { color: #94a3b8; white-space: nowrap; }
+.student-bar select {
+  background: #0f0f23; color: #e0e0e0; border: 1px solid #1a1a40;
+  border-radius: 6px; padding: 4px 8px; font-size: 0.85rem;
+}
+.student-bar .stu-btn {
+  background: none; border: 1px solid #3b82f6; color: #3b82f6;
+  border-radius: 6px; padding: 3px 10px; cursor: pointer; font-size: 0.75rem;
+}
+.student-bar .stu-btn:hover { background: #3b82f6; color: #fff; }
+.student-bar .stu-btn.del { border-color: #e94560; color: #e94560; }
+.student-bar .stu-btn.del:hover { background: #e94560; color: #fff; }
+.student-bar .stu-count { color: #64748b; font-size: 0.75rem; }

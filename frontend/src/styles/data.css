@@ -1,0 +1,50 @@
+/* ── 데이터 뷰어 페이지 스타일 (db_viewer 대체) ── */
+
+.data-main { max-width: 1200px; margin: 0 auto; padding: 20px 16px; }
+
+.data-toolbar {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.data-toolbar .spacer { flex: 1; }
+.data-btn {
+  padding: 6px 14px; border-radius: 8px; border: 1px solid #334155;
+  background: transparent; color: #94a3b8; cursor: pointer; font-size: 0.8rem;
+}
+.data-btn:hover { background: #1e293b; color: #e2e8f0; }
+.data-btn.primary { border-color: #3b82f6; color: #3b82f6; }
+.data-btn.primary:hover { background: #3b82f6; color: #fff; }
+.data-btn.danger { border-color: #e94560; color: #e94560; }
+.data-btn.danger:hover { background: #e94560; color: #fff; }
+
+.table-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.table-tab {
+  padding: 8px 16px; border-radius: 8px; border: 1px solid #1a1a40;
+  background: transparent; color: #94a3b8; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600;
+}
+.table-tab:hover { background: #1a1a40; }
+.table-tab.active { background: #e94560; border-color: #e94560; color: #fff; }
+.table-tab .cnt { font-size: 0.7rem; opacity: 0.7; margin-left: 4px; }
+
+.data-search {
+  padding: 7px 12px; border-radius: 8px; border: 1px solid #333;
+  background: #16213e; color: #fff; font-size: 0.85rem; min-width: 200px;
+}
+
+.data-card {
+  background: #16213e; border: 1px solid #1a1a40; border-radius: 12px;
+  padding: 16px; margin-bottom: 16px; overflow-x: auto;
+}
+.data-card h3 {
+  font-size: 0.8rem; color: #a0a0c0; text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 10px;
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; white-space: nowrap; }
+.data-table th {
+  text-align: left; padding: 6px 10px; color: #64748b;
+  border-bottom: 1px solid #333; position: sticky; top: 0; background: #16213e;
+}
+.data-table td { padding: 6px 10px; border-bottom: 1px solid #1a1a40; color: #cbd5e1; }
+.data-table .empty { color: #444; text-align: center; padding: 20px; }
+.data-meta { font-size: 0.72rem; color: #64748b; margin-top: 8px; }

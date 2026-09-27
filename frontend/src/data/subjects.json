@@ -1,0 +1,10 @@
+[
+  { "name": "국어", "goal_minutes": 40, "color": "#f97316", "done": 0, "sort_order": 0 },
+  { "name": "영어", "goal_minutes": 50, "color": "#3b82f6", "done": 0, "sort_order": 1 },
+  { "name": "수학", "goal_minutes": 90, "color": "#a855f7", "done": 0, "sort_order": 2 },
+  { "name": "사회", "goal_minutes": 30, "color": "#22c55e", "done": 0, "sort_order": 3 },
+  { "name": "역사", "goal_minutes": 30, "color": "#eab308", "done": 0, "sort_order": 4 },
+  { "name": "과학", "goal_minutes": 45, "color": "#06b6d4", "done": 0, "sort_order": 5 },
+  { "name": "물리", "goal_minutes": 40, "color": "#ef4444", "done": 0, "sort_order": 6 },
+  { "name": "독서", "goal_minutes": 30, "color": "#ec4899", "done": 0, "sort_order": 7 }
+]

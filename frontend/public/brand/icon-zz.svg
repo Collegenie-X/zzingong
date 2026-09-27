@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="ZZINGONG AI">
+  <defs>
+    <linearGradient id="zg-zz" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#312E81"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="url(#zg-zz)"/>
+  <circle cx="48" cy="48" r="28" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="7"/>
+  <path d="M48 20A28 28 0 1 1 21.37 56.65" fill="none" stroke="#22D3EE" stroke-width="7" stroke-linecap="round"/>
+  <path d="M36 33H60L36 47H60L36 61H60" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

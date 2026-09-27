@@ -1,0 +1,1472 @@
+<title>다가치 수업 — 바이브 코딩 개발 프로세스</title>
+<style>
+  :root {
+    --ink: #1B2A4A;
+    --ground: #F4F7FB;
+    --surface: #ffffff;
+    --blueprint: #3B82F6;
+    --blueprint-light: #DBEAFE;
+    --blueprint-faint: #EFF6FF;
+    --amber: #F59E0B;
+    --amber-light: #FEF3C7;
+    --green: #10B981;
+    --green-light: #D1FAE5;
+    --red: #EF4444;
+    --red-light: #FEE2E2;
+    --purple: #8B5CF6;
+    --purple-light: #EDE9FE;
+    --text: #334155;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+    --code-bg: #F1F5F9;
+    --font-body: "Pretendard", system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    --nav-w: 260px;
+    --section-max: 860px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #E2E8F0;
+      --ground: #0F172A;
+      --surface: #1E293B;
+      --blueprint: #60A5FA;
+      --blueprint-light: #1E3A5F;
+      --blueprint-faint: #172554;
+      --amber: #FBBF24;
+      --amber-light: #422006;
+      --green: #34D399;
+      --green-light: #064E3B;
+      --red: #F87171;
+      --red-light: #450A0A;
+      --purple: #A78BFA;
+      --purple-light: #2E1065;
+      --text: #CBD5E1;
+      --text-muted: #94A3B8;
+      --border: #334155;
+      --border-strong: #475569;
+      --code-bg: #1E293B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #E2E8F0;
+    --ground: #0F172A;
+    --surface: #1E293B;
+    --blueprint: #60A5FA;
+    --blueprint-light: #1E3A5F;
+    --blueprint-faint: #172554;
+    --amber: #FBBF24;
+    --amber-light: #422006;
+    --green: #34D399;
+    --green-light: #064E3B;
+    --red: #F87171;
+    --red-light: #450A0A;
+    --purple: #A78BFA;
+    --purple-light: #2E1065;
+    --text: #CBD5E1;
+    --text-muted: #94A3B8;
+    --border: #334155;
+    --border-strong: #475569;
+    --code-bg: #1E293B;
+  }
+  :root[data-theme="light"] {
+    --ink: #1B2A4A;
+    --ground: #F4F7FB;
+    --surface: #ffffff;
+    --blueprint: #3B82F6;
+    --blueprint-light: #DBEAFE;
+    --blueprint-faint: #EFF6FF;
+    --amber: #F59E0B;
+    --amber-light: #FEF3C7;
+    --green: #10B981;
+    --green-light: #D1FAE5;
+    --red: #EF4444;
+    --red-light: #FEE2E2;
+    --purple: #8B5CF6;
+    --purple-light: #EDE9FE;
+    --text: #334155;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+    --code-bg: #F1F5F9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--ground);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* --- NAV RAIL --- */
+  .nav-rail {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--nav-w);
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 32px 20px;
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .nav-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .nav-logo span { color: var(--blueprint); }
+
+  .nav-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+  .nav-progress::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 18px;
+    bottom: 18px;
+    width: 2px;
+    background: var(--border);
+  }
+  .nav-day {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    cursor: pointer;
+    position: relative;
+    text-decoration: none;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+  .nav-day:hover { color: var(--blueprint); }
+  .nav-day.active .nav-dot { background: var(--blueprint); box-shadow: 0 0 0 4px var(--blueprint-light); }
+  .nav-day.active .nav-day-label { color: var(--blueprint); font-weight: 700; }
+
+  .nav-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    flex-shrink: 0;
+    margin-top: 4px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s;
+  }
+  .nav-day-info { display: flex; flex-direction: column; gap: 2px; }
+  .nav-day-label { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .nav-day-sub { font-size: 12px; color: var(--text-muted); line-height: 1.3; }
+
+  .nav-section-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .nav-section-link {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 4px 0 4px 26px;
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+  .nav-section-link:hover { color: var(--blueprint); background: var(--blueprint-faint); }
+
+  /* --- MAIN --- */
+  .main {
+    margin-left: var(--nav-w);
+    padding: 40px 48px 80px;
+    max-width: calc(var(--section-max) + 96px + var(--nav-w));
+  }
+
+  /* --- HERO --- */
+  .hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 48px 40px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--blueprint), var(--amber), var(--green), var(--purple));
+  }
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blueprint);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1.3;
+    text-wrap: balance;
+    margin-bottom: 16px;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .hero-tag {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-tag strong { color: var(--text); font-weight: 600; }
+
+  /* --- SECTION --- */
+  .day-section {
+    margin-bottom: 56px;
+    scroll-margin-top: 24px;
+  }
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+  }
+  .day-number {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .day-number.d2 { background: var(--blueprint); }
+  .day-number.d3 { background: var(--amber); }
+  .day-number.d4 { background: var(--green); }
+  .day-header-text h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .day-header-text p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* --- DIAGRAM CARD --- */
+  .diagram-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 32px 28px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .diagram-card.hero-diagram {
+    border-color: var(--blueprint);
+    border-width: 2px;
+    position: relative;
+  }
+  .diagram-card.hero-diagram::before {
+    content: 'CORE CYCLE';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--blueprint);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 2px 10px;
+    border-radius: 4px;
+  }
+  .diagram-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .diagram-card pre.mermaid {
+    background: transparent;
+    margin: 0;
+    font-size: 14px;
+  }
+
+  /* --- STEP CARD --- */
+  .step-row {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 24px 0;
+  }
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+  .step-card:hover { border-color: var(--blueprint); }
+  .step-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .step-icon.setup { background: var(--blueprint-light); }
+  .step-icon.build { background: var(--amber-light); }
+  .step-icon.core { background: var(--green-light); }
+  .step-icon.review { background: var(--purple-light); }
+  .step-body h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .step-body p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .step-time {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blueprint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    margin-left: auto;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  /* --- TIMELINE --- */
+  .timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 32px 0;
+  }
+  .timeline-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 16px;
+    position: relative;
+  }
+  .timeline-col::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 10px 10px 0 0;
+  }
+  .timeline-col.t1::before { background: var(--purple); }
+  .timeline-col.t2::before { background: var(--blueprint); }
+  .timeline-col.t3::before { background: var(--amber); }
+  .timeline-col.t4::before { background: var(--green); }
+  .timeline-col h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .timeline-col .tl-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .timeline-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .timeline-col li {
+    font-size: 12px;
+    color: var(--text);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.4;
+  }
+  .timeline-col li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 6px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border-strong);
+  }
+
+  /* --- PRINCIPLE CARDS --- */
+  .principle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .principle-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .principle-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--blueprint);
+    margin-bottom: 6px;
+  }
+  .principle-card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .principle-card p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* --- COMPARE --- */
+  .compare-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .compare-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .compare-card .cc-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .compare-card .cc-steps {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+  .cc-pill {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--blueprint-faint);
+    color: var(--blueprint);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .cc-arrow {
+    color: var(--text-muted);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* --- SECTION TITLE --- */
+  .section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 32px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* --- CALLOUT --- */
+  .callout {
+    background: var(--blueprint-faint);
+    border-left: 3px solid var(--blueprint);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .callout strong { color: var(--ink); }
+
+  /* --- DATA TABLE --- */
+  .data-table-wrap {
+    overflow-x: auto;
+    margin: 20px 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  thead { background: var(--code-bg); }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .tag-blue { background: var(--blueprint-light); color: var(--blueprint); }
+  .tag-amber { background: var(--amber-light); color: var(--amber); }
+  .tag-green { background: var(--green-light); color: var(--green); }
+
+  /* --- FOOTER --- */
+  .footer-note {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* --- PHASE INTERACTIVE (클릭 가능한 로드맵) --- */
+  .ph-phases { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0 8px; }
+  .ph-phase {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; position: relative; overflow: hidden; cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .ph-phase:hover { border-color: var(--blueprint); transform: translateY(-1px); }
+  .ph-phase.ph-active { border-color: var(--blueprint); border-width: 2px; }
+  .ph-phase::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 10px 10px 0 0; }
+  .ph-phase.ph-p1::before { background: var(--purple); }
+  .ph-phase.ph-p2::before { background: var(--blueprint); }
+  .ph-phase.ph-p3::before { background: var(--amber); }
+  .ph-phase.ph-p4::before { background: var(--green); }
+  .ph-phase-num { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 2px; }
+  .ph-phase-name { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 2px; line-height: 1.3; }
+  .ph-phase-day { font-size: 11px; color: var(--text-muted); }
+  .ph-phase-hint { font-size: 10px; color: var(--blueprint); margin-top: 6px; font-weight: 700; opacity: 0; transition: opacity .2s; }
+  .ph-phase:hover .ph-phase-hint, .ph-phase.ph-active .ph-phase-hint { opacity: 1; }
+
+  .ph-detail {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 22px 24px; margin: 8px 0 20px; display: none;
+  }
+  .ph-detail.ph-show { display: block; }
+  .ph-detail-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .ph-detail-badge {
+    width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .ph-detail-badge.ph-db1 { background: var(--purple); }
+  .ph-detail-badge.ph-db2 { background: var(--blueprint); }
+  .ph-detail-badge.ph-db3 { background: var(--amber); }
+  .ph-detail-badge.ph-db4 { background: var(--green); }
+  .ph-detail-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .ph-detail-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .ph-steps { display: flex; flex-direction: column; position: relative; padding-left: 22px; }
+  .ph-steps::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+  .ph-step { display: flex; align-items: flex-start; gap: 12px; padding: 9px 0; position: relative; }
+  .ph-step-dot {
+    width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border);
+    background: var(--surface); flex-shrink: 0; position: absolute; left: -22px; top: 11px; z-index: 1;
+  }
+  .ph-step-dot.ph-done { border-color: var(--green); background: var(--green-light); }
+  .ph-step-dot.ph-done::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .ph-step-dot.ph-current { border-color: var(--blueprint); background: var(--blueprint-light); }
+  .ph-step-dot.ph-current::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--blueprint); }
+  .ph-step-content { flex: 1; }
+  .ph-step-label { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+  .ph-step-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 2px; }
+  .ph-step-time { font-size: 11px; font-weight: 600; color: var(--blueprint); font-variant-numeric: tabular-nums; margin-top: 3px; }
+
+  .ph-cycle-wrap {
+    background: var(--surface); border: 2px solid var(--blueprint); border-radius: 12px;
+    padding: 24px 20px 20px; position: relative; overflow: hidden; margin: 20px 0 8px;
+  }
+  .ph-cycle-tag {
+    position: absolute; top: -1px; left: 16px; background: var(--blueprint); color: #fff;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 0 0 6px 6px;
+  }
+  .ph-cycle-flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; padding-top: 6px; }
+  .ph-cycle-node { padding: 9px 13px; border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center; line-height: 1.35; min-width: 96px; flex-shrink: 0; }
+  .ph-cn-req { background: var(--blueprint-faint); color: var(--blueprint); border: 1px solid var(--blueprint); }
+  .ph-cn-code { background: var(--purple-light); color: var(--purple); border: 1px solid var(--purple); }
+  .ph-cn-run { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber); }
+  .ph-cn-check { background: var(--green-light); color: var(--green); border: 1px solid var(--green); }
+  .ph-cycle-arr { color: var(--text-muted); font-size: 16px; flex-shrink: 0; }
+  .ph-cycle-branch { display: flex; gap: 16px; margin-top: 14px; justify-content: center; flex-wrap: wrap; }
+  .ph-branch-card { flex: 1; max-width: 220px; min-width: 160px; padding: 10px 14px; border-radius: 8px; text-align: center; font-size: 11px; line-height: 1.5; }
+  .ph-branch-ok { background: var(--green-light); color: var(--green); border: 1px solid var(--green); }
+  .ph-branch-err { background: var(--red-light); color: var(--red); border: 1px solid var(--red); }
+  .ph-branch-label { font-weight: 700; margin-bottom: 2px; }
+
+  /* --- COLLAPSIBLE MERMAID DETAIL --- */
+  details.mermaid-detail { margin: 12px 0 0; }
+  details.mermaid-detail summary {
+    cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text-muted);
+    letter-spacing: 0.04em; padding: 6px 2px; list-style: none;
+  }
+  details.mermaid-detail summary::-webkit-details-marker { display: none; }
+  details.mermaid-detail summary::before { content: '▸ '; color: var(--blueprint); }
+  details.mermaid-detail[open] summary::before { content: '▾ '; }
+
+  /* --- RESPONSIVE --- */
+  @media (max-width: 900px) {
+    .nav-rail { display: none; }
+    .main { margin-left: 0; padding: 24px 20px 60px; }
+    .timeline-grid { grid-template-columns: repeat(2, 1fr); }
+    .principle-grid { grid-template-columns: 1fr; }
+    .compare-row { grid-template-columns: 1fr; }
+    .hero { padding: 32px 24px; }
+    .ph-phases { grid-template-columns: repeat(2, 1fr); }
+    .ph-cycle-flow { gap: 4px; }
+    .ph-cycle-node { min-width: 74px; font-size: 11px; padding: 7px 9px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<!-- NAV RAIL -->
+<nav class="nav-rail">
+  <div class="nav-logo"><span>다가치</span> 수업</div>
+
+  <div class="nav-progress">
+    <a href="#overview" class="nav-day active">
+      <div class="nav-dot"></div>
+      <div class="nav-day-info">
+        <div class="nav-day-label">전체 프로세스</div>
+        <div class="nav-day-sub">로드맵 + 핵심 사이클</div>
+      </div>
+    </a>
+    <a href="#day2" class="nav-day">
+      <div class="nav-dot"></div>
+      <div class="nav-day-info">
+        <div class="nav-day-label">2일차 — 뼈대</div>
+        <div class="nav-day-sub">환경 세팅 → 첫 화면 → 핵심 기능</div>
+      </div>
+    </a>
+    <a href="#day3" class="nav-day">
+      <div class="nav-dot"></div>
+      <div class="nav-day-info">
+        <div class="nav-day-label">3일차 — 조립</div>
+        <div class="nav-day-sub">화면 추가 → 데이터 → 통합</div>
+      </div>
+    </a>
+    <a href="#day4" class="nav-day">
+      <div class="nav-dot"></div>
+      <div class="nav-day-info">
+        <div class="nav-day-label">4일차 — 발표</div>
+        <div class="nav-day-sub">다듬기 → 테스트 → 시연</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="nav-section-links">
+    <a href="#roadmap" class="nav-section-link">전체 개발 로드맵</a>
+    <a href="#vibe-cycle" class="nav-section-link">바이브 코딩 사이클</a>
+    <a href="#debug-flow" class="nav-section-link">디버깅 플로우</a>
+    <a href="#data-flow" class="nav-section-link">데이터 흐름</a>
+    <a href="#presentation" class="nav-section-link">발표 구조</a>
+    <a href="#compare" class="nav-section-link">프로 개발자 비교</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">다가치 수업 &mdash; 2~4일차 커리큘럼</div>
+    <h1>바이브 코딩으로 프로젝트를 만든다</h1>
+    <div class="hero-meta">
+      <span class="hero-tag"><strong>대상</strong> 중학교 2학년</span>
+      <span class="hero-tag"><strong>구성</strong> 2시간 &times; 3일</span>
+      <span class="hero-tag"><strong>도구</strong> Python + Streamlit + AI</span>
+      <span class="hero-tag"><strong>핵심</strong> 코드를 외우지 않고, AI에게 말해서 만든다</span>
+    </div>
+    <div class="callout">
+      <strong>전제:</strong> 1일차에서 팀 구성, 프로젝트 선택, 한 줄 기획서, 역할 분담, 화면 흐름도를 완료한 상태로 시작합니다.
+    </div>
+  </div>
+
+  <!-- ROADMAP -->
+  <section class="day-section" id="overview">
+
+    <div class="section-title" id="roadmap">전체 개발 프로세스 로드맵</div>
+    <div class="callout" style="margin-top:0;">
+      아래 4개 단계를 <strong>클릭</strong>하면 해당 일차의 세부 단계가 펼쳐집니다.
+    </div>
+
+    <!-- 클릭 가능한 PHASE 카드 -->
+    <div class="ph-phases" id="phPhaseGrid">
+      <div class="ph-phase ph-p1 ph-active" data-idx="0" onclick="showPhase(0)">
+        <div class="ph-phase-num">PHASE 1</div>
+        <div class="ph-phase-name">기획</div>
+        <div class="ph-phase-day">1일차 &middot; 완료</div>
+        <div class="ph-phase-hint">클릭해서 보기 &rarr;</div>
+      </div>
+      <div class="ph-phase ph-p2" data-idx="1" onclick="showPhase(1)">
+        <div class="ph-phase-num">PHASE 2</div>
+        <div class="ph-phase-name">프로토타입</div>
+        <div class="ph-phase-day">2일차</div>
+        <div class="ph-phase-hint">클릭해서 보기 &rarr;</div>
+      </div>
+      <div class="ph-phase ph-p3" data-idx="2" onclick="showPhase(2)">
+        <div class="ph-phase-num">PHASE 3</div>
+        <div class="ph-phase-name">개발</div>
+        <div class="ph-phase-day">3일차</div>
+        <div class="ph-phase-hint">클릭해서 보기 &rarr;</div>
+      </div>
+      <div class="ph-phase ph-p4" data-idx="3" onclick="showPhase(3)">
+        <div class="ph-phase-num">PHASE 4</div>
+        <div class="ph-phase-name">완성</div>
+        <div class="ph-phase-day">4일차</div>
+        <div class="ph-phase-hint">클릭해서 보기 &rarr;</div>
+      </div>
+    </div>
+
+    <!-- DETAIL PANELS -->
+    <div class="ph-detail ph-show" id="phd0">
+      <div class="ph-detail-head">
+        <div class="ph-detail-badge ph-db1">P1</div>
+        <div>
+          <div class="ph-detail-title">기획 &mdash; 문제를 정의하고, 팀을 구성한다</div>
+          <div class="ph-detail-sub">1일차 (2시간) &bull; 이미 완료</div>
+        </div>
+      </div>
+      <div class="ph-steps">
+        <div class="ph-step"><div class="ph-step-dot ph-done"></div><div class="ph-step-content"><div class="ph-step-label">문제 정의</div><div class="ph-step-desc">"누가, 왜 필요한가?" 한 줄로 정리</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-done"></div><div class="ph-step-content"><div class="ph-step-label">프로젝트 선택</div><div class="ph-step-desc">10개 아이디어 중 팀 투표로 1개 선택</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-done"></div><div class="ph-step-content"><div class="ph-step-label">한 줄 기획서 작성</div><div class="ph-step-desc">[누가] + [무엇을] + [왜] 형식</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-done"></div><div class="ph-step-content"><div class="ph-step-label">역할 분담</div><div class="ph-step-desc">PM / 기획 / 화면 / 데이터 / 발표</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-done"></div><div class="ph-step-content"><div class="ph-step-label">화면 흐름도 스케치</div><div class="ph-step-desc">화면 3개의 이동 경로를 종이에 그리기</div></div></div>
+      </div>
+    </div>
+
+    <div class="ph-detail" id="phd1">
+      <div class="ph-detail-head">
+        <div class="ph-detail-badge ph-db2">P2</div>
+        <div>
+          <div class="ph-detail-title">프로토타입 &mdash; 뼈대를 만든다</div>
+          <div class="ph-detail-sub">2일차 (2시간)</div>
+        </div>
+      </div>
+      <div class="ph-steps">
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">환경 세팅</div><div class="ph-step-desc">Python 확인 &rarr; Streamlit 설치 &rarr; streamlit hello 데모 확인</div><div class="ph-step-time">20분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">첫 화면 바이브 코딩</div><div class="ph-step-desc">AI에게 프롬프트 &rarr; 코드 받기 &rarr; 붙여넣기 &rarr; 실행 &rarr; 수정 반복</div><div class="ph-step-time">40분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">핵심 기능 1개 구현</div><div class="ph-step-desc">버튼 클릭 &rarr; 결과 표시. "와, 진짜 되네!" 경험</div><div class="ph-step-time">40분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot"></div><div class="ph-step-content"><div class="ph-step-label">팀 회고</div><div class="ph-step-desc">된 것 / 안 된 것 / 내일 할 것</div><div class="ph-step-time">20분</div></div></div>
+      </div>
+    </div>
+
+    <div class="ph-detail" id="phd2">
+      <div class="ph-detail-head">
+        <div class="ph-detail-badge ph-db3">P3</div>
+        <div>
+          <div class="ph-detail-title">개발 &mdash; 살을 붙인다</div>
+          <div class="ph-detail-sub">3일차 (2시간)</div>
+        </div>
+      </div>
+      <div class="ph-steps">
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">어제 복습 + 오늘 계획</div><div class="ph-step-desc">회고 확인, 안 된 것 먼저 해결</div><div class="ph-step-time">10분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">나머지 화면 구현</div><div class="ph-step-desc">2~3번째 화면을 st.tabs / session_state로 추가</div><div class="ph-step-time">50분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">데이터 연결</div><div class="ph-step-desc">입력 &rarr; 저장 &rarr; 불러오기 &rarr; 표시 흐름 완성</div><div class="ph-step-time">30분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">팀원 결과물 합치기</div><div class="ph-step-desc">각자 만든 코드 &rarr; 하나의 app.py로 통합</div><div class="ph-step-time">10분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot"></div><div class="ph-step-content"><div class="ph-step-label">팀 회고</div><div class="ph-step-desc">내일 발표 핵심 장면 3개 선정</div><div class="ph-step-time">20분</div></div></div>
+      </div>
+    </div>
+
+    <div class="ph-detail" id="phd3">
+      <div class="ph-detail-head">
+        <div class="ph-detail-badge ph-db4">P4</div>
+        <div>
+          <div class="ph-detail-title">완성 &mdash; 다듬고 보여준다</div>
+          <div class="ph-detail-sub">4일차 (2시간)</div>
+        </div>
+      </div>
+      <div class="ph-steps">
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">UI 다듬기</div><div class="ph-step-desc">이모지, 색상 통일, 여백, 성공/에러 메시지</div><div class="ph-step-time">30분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">테스트 & 버그 수정</div><div class="ph-step-desc">처음~끝 진행, 빈 값 제출, 반복 테스트</div><div class="ph-step-time">20분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">발표 준비 + 리허설</div><div class="ph-step-desc">기획 의도(1분) &rarr; 시연(1.5분) &rarr; 배운 것(30초)</div><div class="ph-step-time">20분</div></div></div>
+        <div class="ph-step"><div class="ph-step-dot ph-current"></div><div class="ph-step-content"><div class="ph-step-label">3분 팀 발표 + Q&A</div><div class="ph-step-desc">라이브 시연 + 질의응답 + 투표 & 시상</div><div class="ph-step-time">50분</div></div></div>
+      </div>
+    </div>
+
+    <!-- CORE CYCLE -->
+    <div class="section-title" id="vibe-cycle">바이브 코딩 핵심 사이클</div>
+
+    <div class="ph-cycle-wrap">
+      <div class="ph-cycle-tag">CORE CYCLE</div>
+      <div class="ph-cycle-flow">
+        <div class="ph-cycle-node ph-cn-req">AI에게<br/>프롬프트 요청</div>
+        <div class="ph-cycle-arr">&rarr;</div>
+        <div class="ph-cycle-node ph-cn-code">AI가<br/>코드를 준다</div>
+        <div class="ph-cycle-arr">&rarr;</div>
+        <div class="ph-cycle-node ph-cn-run">app.py에<br/>붙여넣고 실행</div>
+        <div class="ph-cycle-arr">&rarr;</div>
+        <div class="ph-cycle-node ph-cn-check">브라우저에서<br/>결과 확인</div>
+      </div>
+      <div class="ph-cycle-branch">
+        <div class="ph-branch-card ph-branch-ok">
+          <div class="ph-branch-label">됐다 &rarr;</div>
+          다음 기능 요청 (사이클 반복)
+        </div>
+        <div class="ph-branch-card ph-branch-err">
+          <div class="ph-branch-label">에러 &rarr;</div>
+          에러 복사 &rarr; AI에게 "이거 왜 안 돼?"
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      이 사이클이 2~4일차 내내 반복됩니다. <strong>모든 기능은 이 루프로 만듭니다.</strong>
+      요청 &rarr; 코드 &rarr; 실행 &rarr; 확인 &rarr; 수정 요청 &rarr; 반복.
+    </div>
+
+    <details class="mermaid-detail">
+      <summary>상세 다이어그램 원본 보기 (Mermaid)</summary>
+      <div class="diagram-card hero-diagram">
+        <pre class="mermaid">
+graph TD
+    A["1. AI에게 요청\n(한국어 프롬프트)"] --> B["2. AI가 코드를 준다"]
+    B --> C["3. app.py에\n붙여넣기"]
+    C --> D["4. streamlit run\n실행"]
+    D --> E{"5. 브라우저에서\n결과 확인"}
+
+    E -->|"원하는 대로 됨"| F["다음 기능 요청\n(사이클 반복)"]
+    E -->|"안 됨 / 에러"| G["에러 메시지\n복사"]
+
+    G --> H["6. AI에게\n'이거 왜 안 돼?'"]
+    H --> B
+
+    F --> A
+
+    style A fill:#3B82F6,color:#fff,stroke:#2563EB
+    style E fill:#F59E0B,color:#fff,stroke:#D97706
+    style G fill:#EF4444,color:#fff,stroke:#DC2626
+    style F fill:#10B981,color:#fff,stroke:#059669
+    style H fill:#8B5CF6,color:#fff,stroke:#7C3AED
+        </pre>
+      </div>
+    </details>
+
+    <!-- PRINCIPLES -->
+    <div class="section-title">공통 원칙</div>
+
+    <div class="principle-grid">
+      <div class="principle-card">
+        <div class="principle-num">원칙 01</div>
+        <h4>선생님은 코드를 가르치지 않는다</h4>
+        <p>학생이 AI에게 직접 요청하고, 결과를 보고, 다시 요청한다. 선생님은 기획과 협업을 촉진하는 역할.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">원칙 02</div>
+        <h4>"안 되는 게 당연하다"</h4>
+        <p>프로 개발자도 매일 에러를 만난다. 에러 = 실패가 아니라, "여기를 고쳐야 한다"는 신호다.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">원칙 03</div>
+        <h4>매 시간 끝에 팀 회고 10분</h4>
+        <p>"오늘 된 것 / 안 된 것 / 다음 시간에 할 것"을 정리한다. 과정을 기록하는 것 자체가 학습.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">원칙 04</div>
+        <h4>완벽할 필요 없다</h4>
+        <p>핵심 기능 1개가 작동하면 성공. 10개인데 다 깨지는 것보다 1개인데 제대로 되는 게 낫다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DAY 2 -->
+  <section class="day-section" id="day2">
+    <div class="day-header">
+      <div class="day-number d2">D2</div>
+      <div class="day-header-text">
+        <h2>2일차 &mdash; 뼈대를 만든다</h2>
+        <p>환경 세팅 &rarr; 첫 화면 바이브 코딩 &rarr; 핵심 기능 1개 작동</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-card">
+        <div class="step-icon setup">&#9881;&#65039;</div>
+        <div class="step-body">
+          <h3>STEP 1. 환경 세팅</h3>
+          <p>Python 확인 &rarr; Streamlit 설치 &rarr; <code>streamlit hello</code>로 데모 확인 &rarr; <code>app.py</code> 만들기</p>
+        </div>
+        <div class="step-time">20분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon build">&#128296;</div>
+        <div class="step-body">
+          <h3>STEP 2. 첫 화면 바이브 코딩</h3>
+          <p>AI에게 프로젝트 첫 화면을 프롬프트로 요청. 코드를 받아 실행하고, 수정을 반복한다.</p>
+        </div>
+        <div class="step-time">40분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon core">&#9889;</div>
+        <div class="step-body">
+          <h3>STEP 3. 핵심 기능 구현</h3>
+          <p>프로젝트의 핵심 로직 1개를 작동시킨다. 버튼 클릭 &rarr; 결과 표시 등.</p>
+        </div>
+        <div class="step-time">40분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon review">&#128221;</div>
+        <div class="step-body">
+          <h3>STEP 4. 팀 회고</h3>
+          <p>된 것 / 안 된 것 / 내일 할 것 정리. 코드 저장.</p>
+        </div>
+        <div class="step-time">20분</div>
+      </div>
+    </div>
+
+    <!-- Environment setup flow -->
+    <div class="diagram-card">
+      <div class="diagram-label">환경 세팅 프로세스</div>
+      <pre class="mermaid">
+graph TD
+    START["컴퓨터 켜기"] --> CHECK1{"python --version\n실행되나?"}
+
+    CHECK1 -->|"됨"| CHECK2{"pip install streamlit\n실행되나?"}
+    CHECK1 -->|"안 됨"| INSTALL_PY["python.org에서\nPython 설치"]
+    INSTALL_PY --> CHECK2
+
+    CHECK2 -->|"설치 완료"| CHECK3{"streamlit hello\n실행되나?"}
+    CHECK2 -->|"오류"| FIX_PIP["python -m pip\ninstall streamlit"]
+    FIX_PIP --> CHECK3
+
+    CHECK3 -->|"데모 뜸"| MAKE["app.py 만들기"]
+    CHECK3 -->|"안 뜸"| FIX_URL["localhost:8501\n직접 입력"]
+    FIX_URL --> MAKE
+
+    MAKE --> RUN["streamlit run app.py"]
+    RUN --> DONE["환경 세팅 완료"]
+
+    style DONE fill:#10B981,color:#fff,stroke:#059669
+    style INSTALL_PY fill:#F59E0B,color:#fff,stroke:#D97706
+    style FIX_PIP fill:#F59E0B,color:#fff,stroke:#D97706
+      </pre>
+    </div>
+
+    <!-- Sequence diagram -->
+    <div class="diagram-card">
+      <div class="diagram-label">바이브 코딩 상호작용</div>
+      <pre class="mermaid">
+sequenceDiagram
+    participant S as 학생
+    participant AI as AI (Claude/ChatGPT)
+    participant C as app.py
+    participant B as 브라우저
+
+    S->>AI: "Streamlit으로 급식 별점 앱 만들어줘"
+    AI-->>S: 코드를 돌려줌
+    S->>C: 코드를 app.py에 붙여넣기
+    S->>B: streamlit run app.py
+    B-->>S: 결과 화면 확인
+
+    alt 원하는 대로 됨
+        S->>AI: "좋아! 이제 차트도 추가해줘"
+    else 에러 발생
+        S->>AI: "이 에러가 떴어 [에러 복사]. 왜 안 돼?"
+        AI-->>S: 수정된 코드
+        S->>C: 수정 코드 붙여넣기
+        S->>B: 다시 실행
+    end
+
+    Note over S,B: 이 사이클을 계속 반복한다
+      </pre>
+    </div>
+
+    <!-- Core feature flow -->
+    <div class="diagram-card">
+      <div class="diagram-label">핵심 기능 구현 흐름</div>
+      <pre class="mermaid">
+graph TD
+    START["첫 화면 완성"] --> REQ["AI에게 요청:\n핵심 기능 추가해줘"]
+    REQ --> CODE["AI가 코드를 준다"]
+    CODE --> ADD["기존 app.py에 추가"]
+    ADD --> RUN["실행해서 확인"]
+    RUN --> CHECK{"작동하나?"}
+
+    CHECK -->|"됨"| NEXT["다음 기능 요청"]
+    CHECK -->|"안 됨"| DEBUG["에러를 AI에게\n보여주고 수정"]
+    DEBUG --> CODE
+
+    NEXT --> DONE{"오늘 목표\n달성?"}
+    DONE -->|"아직"| REQ
+    DONE -->|"완료"| END["2일차 성공"]
+
+    style START fill:#3B82F6,color:#fff,stroke:#2563EB
+    style END fill:#10B981,color:#fff,stroke:#059669
+    style DEBUG fill:#EF4444,color:#fff,stroke:#DC2626
+      </pre>
+    </div>
+
+    <!-- Feature table -->
+    <div class="section-title">프로젝트별 2일차 핵심 기능</div>
+    <div class="data-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>프로젝트</th>
+            <th>오늘 작동시킬 핵심 기능 1개</th>
+            <th>난이도</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>&#9312; 감정 방탈출</td><td>감정 입력 &rarr; 다른 방으로 이동 (화면 전환)</td><td><span class="tag tag-amber">보통</span></td></tr>
+          <tr><td>&#9313; 설문 리서치</td><td>질문에 답하면 &rarr; 응답이 저장됨</td><td><span class="tag tag-blue">쉬움</span></td></tr>
+          <tr><td>&#9314; 취향 테스트</td><td>질문 5개 진행 &rarr; 다음 질문으로 넘어감</td><td><span class="tag tag-amber">보통</span></td></tr>
+          <tr><td>&#9315; 급식 별점</td><td>별점 제출 &rarr; 제출 내역이 아래에 표시됨</td><td><span class="tag tag-blue">쉬움</span></td></tr>
+          <tr><td>&#9316; 공부 타이머</td><td>타이머 시작 &rarr; 시간이 줄어듦</td><td><span class="tag tag-amber">보통</span></td></tr>
+          <tr><td>&#9317; AI 과목 튜터</td><td>질문 입력 &rarr; 답변 생성</td><td><span class="tag tag-green">어려움</span></td></tr>
+          <tr><td>&#9318; 플레이리스트</td><td>무드 선택 &rarr; 추천 노래가 바뀜</td><td><span class="tag tag-amber">보통</span></td></tr>
+          <tr><td>&#9319; 용돈 가계부</td><td>지출 추가 &rarr; 목록에 추가, 남은 금액 변경</td><td><span class="tag tag-amber">보통</span></td></tr>
+          <tr><td>&#9320; 시간표 알리미</td><td>요일 선택 &rarr; 시간표가 바뀜</td><td><span class="tag tag-blue">쉬움</span></td></tr>
+          <tr><td>&#9321; 환경 대시보드</td><td>지역 선택 &rarr; 차트가 바뀜</td><td><span class="tag tag-green">어려움</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- DAY 3 -->
+  <section class="day-section" id="day3">
+    <div class="day-header">
+      <div class="day-number d3">D3</div>
+      <div class="day-header-text">
+        <h2>3일차 &mdash; 살을 붙인다</h2>
+        <p>나머지 화면 &rarr; 데이터 연결 &rarr; 팀원 결과물 합치기</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-card">
+        <div class="step-icon review">&#128260;</div>
+        <div class="step-body">
+          <h3>STEP 1. 어제 복습 + 오늘 계획</h3>
+          <p>회고 확인, 안 된 것 먼저 해결, 역할별 오늘 할 일 정리</p>
+        </div>
+        <div class="step-time">10분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon build">&#128421;</div>
+        <div class="step-body">
+          <h3>STEP 2. 나머지 화면 구현</h3>
+          <p>2~3번째 화면을 바이브 코딩으로 추가. st.tabs / session_state로 화면 연결.</p>
+        </div>
+        <div class="step-time">50분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon core">&#128190;</div>
+        <div class="step-body">
+          <h3>STEP 3. 데이터 연결</h3>
+          <p>입력 &rarr; 저장 &rarr; 불러오기 &rarr; 표시. 이 네 단계가 이어져야 "앱"이 된다.</p>
+        </div>
+        <div class="step-time">30분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon setup">&#128279;</div>
+        <div class="step-body">
+          <h3>STEP 4. 팀원 결과물 합치기</h3>
+          <p>각자 만든 코드를 하나의 app.py로 통합. AI에게 "이 두 코드를 합쳐줘" 요청.</p>
+        </div>
+        <div class="step-time">10분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon review">&#128221;</div>
+        <div class="step-body">
+          <h3>STEP 5. 팀 회고</h3>
+          <p>내일 발표에서 보여줄 핵심 장면 3개를 정한다.</p>
+        </div>
+        <div class="step-time">20분</div>
+      </div>
+    </div>
+
+    <!-- Data flow -->
+    <div class="section-title" id="data-flow">데이터 흐름</div>
+
+    <div class="diagram-card">
+      <div class="diagram-label">데이터 연결 &mdash; 입력에서 표시까지</div>
+      <pre class="mermaid">
+graph LR
+    subgraph A["입력"]
+        INPUT["텍스트 / 슬라이더\n버튼 클릭"]
+    end
+
+    subgraph B["저장"]
+        STORE["session_state\n또는 CSV 파일"]
+    end
+
+    subgraph C["가공"]
+        LOAD["평균, 합계,\n정렬, 필터"]
+    end
+
+    subgraph D["표시"]
+        DISPLAY["테이블 / 차트\nmetric / 카드"]
+    end
+
+    INPUT -->|"제출 버튼"| STORE
+    STORE -->|"앱 리렌더"| LOAD
+    LOAD -->|"결과"| DISPLAY
+
+    style INPUT fill:#3B82F6,color:#fff,stroke:#2563EB
+    style STORE fill:#F59E0B,color:#fff,stroke:#D97706
+    style LOAD fill:#8B5CF6,color:#fff,stroke:#7C3AED
+    style DISPLAY fill:#10B981,color:#fff,stroke:#059669
+      </pre>
+    </div>
+
+    <!-- Team merge -->
+    <div class="diagram-card">
+      <div class="diagram-label">팀원 코드 통합 프로세스</div>
+      <pre class="mermaid">
+graph TD
+    subgraph T["각자 만든 것"]
+        M1["기획: 콘텐츠 데이터"]
+        M2["화면: 2번째 화면 코드"]
+        M3["데이터: 저장/차트 코드"]
+    end
+
+    MERGE{"합치기"}
+
+    M1 --> MERGE
+    M2 --> MERGE
+    M3 --> MERGE
+
+    MERGE -->|"방법 1"| WAY1["한 명이 메인 app.py\n관리하며 복붙"]
+    MERGE -->|"방법 2"| WAY2["AI에게\n합쳐달라고 요청"]
+
+    WAY1 --> RESULT["하나의 app.py\nst.tabs로 화면 분리"]
+    WAY2 --> RESULT
+
+    RESULT --> TEST["실행 + 테스트"]
+
+    style RESULT fill:#10B981,color:#fff,stroke:#059669
+      </pre>
+    </div>
+
+    <!-- Day 3 feature table -->
+    <div class="section-title">프로젝트별 3일차 추가 목표</div>
+    <div class="data-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>프로젝트</th>
+            <th>2일차에 만든 것</th>
+            <th>3일차에 추가할 것</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>&#9312; 방탈출</td><td>인트로 + 감정 입력</td><td>방 2~3개 + 선택지 &rarr; 엔딩 화면</td></tr>
+          <tr><td>&#9313; 설문</td><td>설문 응답 화면</td><td>결과 대시보드 (차트)</td></tr>
+          <tr><td>&#9314; 취향 테스트</td><td>시작 + 질문 진행</td><td>점수 계산 + 결과 카드</td></tr>
+          <tr><td>&#9315; 급식 별점</td><td>별점 입력</td><td>대시보드 (TOP 랭킹 + 차트)</td></tr>
+          <tr><td>&#9316; 공부 타이머</td><td>타이머 작동</td><td>기록 저장 + 주간 차트</td></tr>
+          <tr><td>&#9317; AI 튜터</td><td>채팅 UI + AI 응답</td><td>과목 선택 + 대화 이력</td></tr>
+          <tr><td>&#9318; 플레이리스트</td><td>무드 선택 + 추천</td><td>좋아요 + 무드별 배경색</td></tr>
+          <tr><td>&#9319; 가계부</td><td>지출 입력 + 목록</td><td>파이 차트 + 잔액 경고</td></tr>
+          <tr><td>&#9320; 시간표</td><td>시간표 표시</td><td>준비물 체크 + 변경 알림</td></tr>
+          <tr><td>&#9321; 환경</td><td>지역 선택 + 차트</td><td>두 지역 비교 + AI 해석</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- DAY 4 -->
+  <section class="day-section" id="day4">
+    <div class="day-header">
+      <div class="day-number d4">D4</div>
+      <div class="day-header-text">
+        <h2>4일차 &mdash; 다듬고 보여준다</h2>
+        <p>UI 개선 &rarr; 테스트 &rarr; 발표 준비 &rarr; 3분 시연</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-card">
+        <div class="step-icon build">&#127912;</div>
+        <div class="step-body">
+          <h3>STEP 1. UI 다듬기</h3>
+          <p>이모지, 색상 통일, 여백 정리, 성공/에러 메시지. AI에게 "예쁘게 다듬어줘".</p>
+        </div>
+        <div class="step-time">30분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon core">&#128270;</div>
+        <div class="step-body">
+          <h3>STEP 2. 테스트 & 버그 수정</h3>
+          <p>처음부터 끝까지 한 번 진행. 빈 값 제출, 3번 반복, 새로고침 테스트.</p>
+        </div>
+        <div class="step-time">20분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon setup">&#128196;</div>
+        <div class="step-body">
+          <h3>STEP 3. 발표 준비</h3>
+          <p>기획 의도(1분) &rarr; 라이브 시연(1분 30초) &rarr; 배운 것(30초). 리허설 1회.</p>
+        </div>
+        <div class="step-time">20분</div>
+      </div>
+      <div class="step-card">
+        <div class="step-icon review">&#127908;</div>
+        <div class="step-body">
+          <h3>STEP 4. 팀 발표</h3>
+          <p>팀당 3분 시연 + 2분 Q&amp;A. 투표 &amp; 시상. 전체 회고.</p>
+        </div>
+        <div class="step-time">50분</div>
+      </div>
+    </div>
+
+    <!-- Debug flow -->
+    <div class="section-title" id="debug-flow">디버깅 오케스트레이션</div>
+
+    <div class="diagram-card">
+      <div class="diagram-label">에러 해결 프로세스</div>
+      <pre class="mermaid">
+graph TD
+    ERR["에러 발생"] --> READ["에러 메시지 읽기\nError, line, 숫자 찾기"]
+    READ --> COPY["에러 메시지 복사\nCtrl+C"]
+    COPY --> ASK["AI에게 보여주기\n'이거 왜 안 돼?'"]
+    ASK --> FIX["수정 코드 받기"]
+    FIX --> PASTE["전체 코드 교체"]
+    PASTE --> RERUN["다시 실행"]
+    RERUN --> CHECK{"해결?"}
+
+    CHECK -->|"해결"| DONE["계속 진행"]
+    CHECK -->|"안 됨"| ASK2["다른 AI에게\n같은 에러 질문"]
+    ASK2 --> COMPARE["두 답변 비교\n공통점 적용"]
+    COMPARE --> PASTE
+
+    style ERR fill:#EF4444,color:#fff,stroke:#DC2626
+    style DONE fill:#10B981,color:#fff,stroke:#059669
+    style ASK2 fill:#8B5CF6,color:#fff,stroke:#7C3AED
+      </pre>
+    </div>
+
+    <!-- Presentation structure -->
+    <div class="section-title" id="presentation">발표 구조 &mdash; 3분</div>
+
+    <div class="diagram-card">
+      <div class="diagram-label">발표 타임라인</div>
+      <pre class="mermaid">
+graph LR
+    subgraph T1["1분 &mdash; 기획 의도"]
+        Q1["왜 만들었는가?\n문제 정의 + 대상"]
+    end
+
+    subgraph T2["1분 30초 &mdash; 라이브 시연"]
+        Q2["무엇을 만들었는가?\n앱 실행 + 핵심 장면 3개"]
+    end
+
+    subgraph T3["30초 &mdash; 배운 것"]
+        Q3["어떻게 만들었는가?\n바이브 코딩 + 어려웠던 점"]
+    end
+
+    T1 --> T2 --> T3
+      </pre>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="day-section" id="compare">
+    <div class="section-title">프로 개발자와 같은 과정</div>
+
+    <div class="compare-row">
+      <div class="compare-card">
+        <div class="cc-label">구글 개발자</div>
+        <div class="cc-steps">
+          <span class="cc-pill">기획</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">설계</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">개발</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">테스트</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">배포</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">발표</span>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="cc-label">스타트업 대표</div>
+        <div class="cc-steps">
+          <span class="cc-pill">아이디어</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">프로토타입</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">검증</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">출시</span>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="cc-label">너희가 한 것</div>
+        <div class="cc-steps">
+          <span class="cc-pill">기획</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">설계</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">개발</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">테스트</span><span class="cc-arrow">&rarr;</span>
+          <span class="cc-pill">발표</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>과정이 똑같다. 다른 건 규모뿐이다.</strong>
+      구글 개발자도, 스타트업 대표도, 너희도 &mdash; 기획하고, 만들고, 테스트하고, 보여준다.
+    </div>
+  </section>
+
+  <div class="footer-note">
+    다가치 수업 &mdash; 바이브 코딩 프로젝트 실습 &bull; 중학교 2학년 &bull; Python + Streamlit + AI
+  </div>
+
+</div>
+
+<!-- Mermaid.js: renders every <pre class="mermaid"> block as a diagram -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var themeAttr = document.documentElement.getAttribute('data-theme');
+  var isDark = themeAttr === 'dark' || (themeAttr !== 'light' && prefersDark);
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: isDark ? 'dark' : 'default',
+    securityLevel: 'loose',
+    fontFamily: 'Pretendard, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif'
+  });
+
+  function renderNodes(nodes) {
+    var list = Array.prototype.filter.call(nodes, function (n) { return !n.hasAttribute('data-mermaid-done'); });
+    if (!list.length) return;
+    mermaid.run({ nodes: list }).then(function () {
+      list.forEach(function (n) { n.setAttribute('data-mermaid-done', 'true'); });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // 처음부터 화면에 보이는 다이어그램(닫힌 <details> 안에 없는 것)은 바로 렌더링
+    var all = document.querySelectorAll('pre.mermaid');
+    var visibleNow = [];
+    all.forEach(function (n) {
+      var wrap = n.closest('details');
+      if (!wrap || wrap.open) visibleNow.push(n);
+    });
+    renderNodes(visibleNow);
+
+    // <details>가 열릴 때 그 안의 다이어그램을 지연 렌더링
+    document.querySelectorAll('details.mermaid-detail').forEach(function (d) {
+      d.addEventListener('toggle', function () {
+        if (d.open) renderNodes(d.querySelectorAll('pre.mermaid'));
+      });
+    });
+  });
+})();
+
+// PHASE 카드 클릭 → 해당 상세 패널 전환
+function showPhase(idx) {
+  document.querySelectorAll('.ph-phase').forEach(function (p, i) {
+    p.classList.toggle('ph-active', i === idx);
+  });
+  document.querySelectorAll('.ph-detail').forEach(function (d, i) {
+    d.classList.toggle('ph-show', i === idx);
+  });
+}
+</script>
+
+<script>
+// Scroll spy for nav
+const sections = document.querySelectorAll('.day-section');
+const navDays = document.querySelectorAll('.nav-day');
+
+function updateNav() {
+  let current = 'overview';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) {
+      current = s.id;
+    }
+  });
+  navDays.forEach(n => {
+    n.classList.toggle('active', n.getAttribute('href') === '#' + current);
+  });
+}
+window.addEventListener('scroll', updateNav, { passive: true });
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
