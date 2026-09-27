@@ -33,23 +33,60 @@ export interface PlanTime {
   end: string;
   overMidnight: boolean;
   skipped: boolean;
+  /** 예정 시각이 이미 지나서 뒤로 밀린 과목 */
+  rolled: boolean;
+  /** 원래 계획대로라면 이미 시작했어야 하는 미완료 과목 */
+  overdue: boolean;
 }
 
+/**
+ * 과목별 예상 시작·종료 시각을 계산합니다.
+ *
+ * 아직 손대지 않은(done === 0) 첫 과목의 시작 시각은 `max(계획 시작, 현재 시각)`으로
+ * 잡고, 뒤 과목들은 거기서부터 차례로 누적합니다. 계획표가 과거에 고정돼 있으면
+ * 예상 종료 시각이 실제와 계속 어긋나기 때문입니다.
+ *
+ * 타이머가 도는 동안에는 시각이 1초마다 떨리지 않도록 호출하는 쪽에서 `now`를
+ * 고정해 넘겨줍니다(PlanList 의 앵커 참고).
+ */
 export function calcTimes(subjects: Subject[], now: Date = new Date()): PlanTime[] {
-  let cursor = planStart(now).getTime();
+  const nowMs = now.getTime();
+  const base = planStart(now).getTime();
   const midnight = new Date(now);
   midnight.setHours(24, 0, 0, 0);
 
+  let cursor = base; // 실제로 보여줄 커서(밀린 시각 반영)
+  let planned = base; // 원래 계획 커서(밀기 전)
+  let anchored = false;
+
   return subjects.map((s) => {
     const skipped = s.done === 2;
+    const pending = s.done === 0;
+    const plannedStart = planned;
+
+    // 미완료 과목 중 첫 번째에서 현재 시각으로 한 번만 앵커링합니다.
+    if (pending && !anchored) {
+      anchored = true;
+      cursor = Math.max(cursor, nowMs);
+    }
+
     const st = new Date(cursor);
-    if (!skipped) cursor += s.goal_minutes * 60000;
+    const rolled = !skipped && cursor > plannedStart;
+    const overdue = pending && plannedStart < nowMs;
+
+    if (!skipped) {
+      cursor += s.goal_minutes * 60000;
+      planned += s.goal_minutes * 60000;
+    }
     const en = new Date(cursor);
+
     return {
       start: skipped ? '-' : hm(st),
       end: skipped ? '-' : hm(en),
       overMidnight: !skipped && cursor > midnight.getTime(),
       skipped,
+      rolled,
+      overdue,
     };
   });
 }

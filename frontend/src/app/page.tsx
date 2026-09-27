@@ -12,7 +12,6 @@ import TimerPanel from '@/components/timer/TimerPanel';
 import TodayLog from '@/components/timer/TodayLog';
 import { useSelectedStudent } from '@/hooks/useSelectedStudent';
 import { api } from '@/lib/api';
-import { calcTimes } from '@/lib/plan';
 import type { SessionRecord, Subject, SubjectInput } from '@/lib/types';
 import '@/styles/timer.css';
 
@@ -31,8 +30,6 @@ export default function TimerPage() {
   const pauseStartRef = useRef<number | null>(null);
   const startTimeRef = useRef<string | null>(null);
   const monitorRef = useRef<MonitorHandle>(null);
-  const subjectsRef = useRef<Subject[]>([]);
-  subjectsRef.current = subjects;
 
   // ── 데이터 로드 ──
   const loadSubjects = useCallback(async () => {
@@ -131,6 +128,14 @@ export default function TimerPage() {
     }
   };
 
+  /** 예정 시간이 지난 과목들을 한 번에 건너뛰기(또는 완료) 처리합니다. */
+  const handleSkipMany = async (names: string[]) => {
+    for (const name of names) {
+      if (running && selected === name) continue; // 측정 중인 과목은 건드리지 않습니다
+      await handleToggleDone(name);
+    }
+  };
+
   const handleReorder = (next: Subject[]) => {
     setSubjects(next);
     api.reorderSubjects(next.map((s) => s.name));
@@ -163,29 +168,6 @@ export default function TimerPage() {
     return null;
   };
 
-  // ── 예정 시간이 지난 과목 자동 완료 (30초마다 점검) ──
-  // 계획이 고정된 시각(기본 20:00)에서 시작하므로, 페이지를 열기 전에 이미
-  // 지나간 시간대까지 건드리면 계획이 통째로 지워집니다.
-  // 화면을 열어 둔 동안 지나가는 과목만 자동 처리합니다.
-  useEffect(() => {
-    const openedAt = Date.now();
-    const check = () => {
-      const list = subjectsRef.current;
-      const now = new Date();
-      const times = calcTimes(list, now);
-      list.forEach((s, i) => {
-        if (s.done !== 0 || times[i].overMidnight) return;
-        const [eh, em] = times[i].end.split(':').map(Number);
-        const endDate = new Date(now);
-        endDate.setHours(eh, em, 0, 0);
-        if (endDate.getTime() >= openedAt && now >= endDate) handleToggleDone(s.name);
-      });
-    };
-    const t = setInterval(check, 30000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studentId]);
-
   // ── 계획 카드/타이머 버튼 밖을 클릭하면 선택 해제 ──
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -215,6 +197,7 @@ export default function TimerPage() {
           onAdd={handleAddSubject}
           onEdit={handleEditSubject}
           onDelete={handleDeleteSubject}
+          onSkipMany={handleSkipMany}
         />
         <div>
           <TimerPanel

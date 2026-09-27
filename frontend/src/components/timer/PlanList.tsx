@@ -4,6 +4,7 @@
 // 예상 시각은 자정 이내면 파란색, 자정을 넘기면 빨간색으로 표시합니다.
 
 import { useState } from 'react';
+import { useScheduleAnchor } from '@/hooks/useScheduleAnchor';
 import { calcTimes, dayConfig, planTotalMinutes } from '@/lib/plan';
 import type { Subject, SubjectInput } from '@/lib/types';
 import PlanSummary from './PlanSummary';
@@ -20,6 +21,8 @@ interface Props {
   onAdd: (input: SubjectInput) => Promise<string | null>;
   onEdit: (name: string, input: SubjectInput) => Promise<string | null>;
   onDelete: (name: string) => Promise<string | null>;
+  /** 지난 과목 여러 개를 한 번에 건너뛰기 처리 */
+  onSkipMany: (names: string[]) => void;
 }
 
 /** 모달 상태: 닫힘 | 추가 | 특정 과목 수정 */
@@ -36,13 +39,21 @@ export default function PlanList({
   onAdd,
   onEdit,
   onDelete,
+  onSkipMany,
 }: Props) {
   const [dragSrc, setDragSrc] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(null);
   const [formError, setFormError] = useState('');
+  // 안내 배너를 닫은 시점의 '지난 과목' 목록. 같은 조합이면 다시 띄우지 않습니다.
+  const [dismissed, setDismissed] = useState('');
 
-  const times = calcTimes(subjects);
+  // 측정 중에는 기준 시각을 고정해 예상 시각이 매초 흔들리지 않게 합니다.
+  const anchor = useScheduleAnchor(running);
+  const times = calcTimes(subjects, anchor);
+  const overdue = subjects.filter((s, i) => times[i].overdue);
+  const overdueKey = overdue.map((s) => s.name).join('|');
+  const showOverdueBanner = overdue.length > 0 && overdueKey !== dismissed;
   const activeTotal = planTotalMinutes(subjects);
   const lastActive = [...times].reverse().find((t) => !t.skipped) ?? times[times.length - 1];
   const cfg = dayConfig();
@@ -114,6 +125,29 @@ export default function PlanList({
         </div>
       </div>
 
+      {showOverdueBanner && (
+        <div className="plan-overdue" role="status">
+          <span className="po-icon" aria-hidden>⏰</span>
+          <span className="po-text">
+            <b>{overdue.length}과목</b>이 예정 시간을 지났어요. 지금 시각 기준으로 뒤로 밀어 뒀습니다.
+          </span>
+          <span className="po-actions">
+            <button className="po-btn" onClick={() => setDismissed(overdueKey)}>
+              뒤로 밀기
+            </button>
+            <button
+              className="po-btn skip"
+              onClick={() => {
+                onSkipMany(overdue.map((s) => s.name));
+                setDismissed(overdueKey);
+              }}
+            >
+              모두 건너뛰기
+            </button>
+          </span>
+        </div>
+      )}
+
       <ul className="plan-list">
         {subjects.map((s, i) => {
           const t = times[i];
@@ -168,7 +202,7 @@ export default function PlanList({
               {s.done === 1 && <span className="plan-done-label completed">완료</span>}
               {s.done === 2 && <span className="plan-done-label skipped">건너뛰기</span>}
               <span className="plan-minutes">{s.goal_minutes}분</span>
-              <span className="plan-time-range">
+              <span className={`plan-time-range${t.rolled ? ' rolled' : ''}`} title={t.rolled ? '예정 시간이 지나 뒤로 밀린 과목이에요' : undefined}>
                 {t.skipped ? '' : `${t.start}~`}
                 <span className={`end${t.overMidnight ? ' past-midnight' : ''}`}>
                   {t.skipped ? '' : t.end}

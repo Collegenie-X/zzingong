@@ -102,6 +102,31 @@
 .plan-done-label.completed { color: #4CAF50; }
 .plan-done-label.skipped { color: #FFC107; }
 
+/* ── 지난 과목 안내 배너 ── */
+.plan-overdue {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 10px; padding: 9px 11px;
+  background: rgba(255, 193, 7, 0.09);
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  border-radius: 10px;
+  font-size: 0.75rem; color: #d9c07a;
+}
+.po-icon { flex-shrink: 0; font-size: 0.9rem; }
+.po-text { flex: 1; min-width: 150px; line-height: 1.45; }
+.po-text b { color: #FFC107; }
+.po-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.po-btn {
+  border: 1px solid #3b82f6; background: none; color: #3b82f6;
+  border-radius: 6px; padding: 4px 9px;
+  font-size: 0.7rem; font-family: inherit; cursor: pointer; white-space: nowrap;
+}
+.po-btn:hover { background: #3b82f6; color: #fff; }
+.po-btn.skip { border-color: #FFC107; color: #FFC107; }
+.po-btn.skip:hover { background: #FFC107; color: #1a1a2e; }
+
+/* 예정 시간이 지나 뒤로 밀린 과목 */
+.plan-time-range.rolled { color: #FFC107; }
+
 .plan-hint { text-align: center; font-size: 0.7rem; color: #555; margin-top: 8px; }
 
 /* ── 타이머 ── */
