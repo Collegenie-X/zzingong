@@ -7,6 +7,7 @@ import type {
   ClassAvg,
   DailyStat,
   DashboardData,
+  PeerStat,
   SessionRecord,
   Student,
   Subject,
@@ -92,7 +93,30 @@ export function buildDashboard(
     subjects: subjectSummary,
     daily: [...daily].reverse(),
     class_avg: calcClassAvg(startDate, subjects, students, allSessions),
+    peers: buildPeers(startDate, studentId, students, allSessions),
   };
+}
+
+/** 학생별·날짜별 공부/쉬는 시간(분) — 기록이 없는 학생도 0으로 포함해 순위를 매깁니다 */
+function buildPeers(
+  startDate: string,
+  studentId: string,
+  students: Student[],
+  allSessions: SessionRecord[],
+): PeerStat[] {
+  const byId = new Map<string, PeerStat>(
+    students.map((st) => [st.id, { is_me: st.id === studentId, days: {} }]),
+  );
+  for (const s of allSessions) {
+    if (s.date < startDate) continue;
+    const peer = byId.get(s.student_id);
+    if (!peer) continue;
+    const day = (peer.days[s.date] ??= { study: 0, pause: 0, subj: {} });
+    day.study += s.duration_seconds / 60;
+    day.pause += s.pause_seconds / 60;
+    day.subj[s.subject] = (day.subj[s.subject] ?? 0) + s.duration_seconds / 60;
+  }
+  return [...byId.values()];
 }
 
 function buildSubjectSummary(subjects: Subject[], daily: DailyStat[]): SubjectSummary[] {

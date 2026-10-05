@@ -51,12 +51,22 @@ function loadSessions(): SessionRecord[] {
 function ensureSeed(): void {
   if (typeof window === 'undefined') return;
   if (readJSON<boolean>(KEYS.seeded, false)) return;
+  seedDummy();
+}
+
+/** 더미 데이터를 새로 만들고, 더미의 '나' 학생을 기본 선택합니다 */
+function seedDummy(): void {
   const subjects = seedSubjects as Subject[];
   writeJSON(KEYS.subjects, subjects);
-  const { students, sessions } = generateDummyData(subjects);
+  const { students, sessions, meId } = generateDummyData(subjects);
   writeJSON(KEYS.students, students);
   writeJSON(KEYS.sessions, sessions);
   writeJSON(KEYS.seeded, true);
+  try {
+    if (meId) window.localStorage.setItem(KEYS.selectedStudent, meId);
+  } catch {
+    // ignore
+  }
 }
 
 function nextSessionId(sessions: SessionRecord[]): number {
@@ -103,7 +113,19 @@ export const localApi: StudyApi = {
 
   async getSubjects() {
     ensureSeed();
-    return [...loadSubjects()].sort((a, b) => a.sort_order - b.sort_order);
+    // 완료/건너뛰기는 그날에만 유효합니다. 날짜가 바뀌면 미완료로 되돌립니다.
+    const subjects = loadSubjects();
+    const today = todayStr();
+    let stale = false;
+    for (const s of subjects) {
+      if (s.done !== 0 && s.done_date !== today) {
+        s.done = 0;
+        delete s.done_date;
+        stale = true;
+      }
+    }
+    if (stale) writeJSON(KEYS.subjects, subjects);
+    return [...subjects].sort((a, b) => a.sort_order - b.sort_order);
   },
 
   async addSubject(input) {
@@ -177,6 +199,7 @@ export const localApi: StudyApi = {
 
     if (subj.done !== 0) {
       subj.done = 0;
+      delete subj.done_date;
       writeJSON(KEYS.subjects, subjects);
       return { ok: true, done: 0, status: 'none' };
     }
@@ -191,6 +214,7 @@ export const localApi: StudyApi = {
     }
     const newDone: DoneState = studySec >= 600 ? 1 : 2;
     subj.done = newDone;
+    subj.done_date = todayStr();
     writeJSON(KEYS.subjects, subjects);
     return { ok: true, done: newDone, status: newDone === 1 ? 'done' : 'skipped' };
   },
@@ -242,12 +266,7 @@ export const localApi: StudyApi = {
   },
 
   async regenerateDummy() {
-    const subjects = seedSubjects as Subject[];
-    writeJSON(KEYS.subjects, subjects);
-    const { students, sessions } = generateDummyData(subjects);
-    writeJSON(KEYS.students, students);
-    writeJSON(KEYS.sessions, sessions);
-    writeJSON(KEYS.seeded, true);
+    seedDummy();
     return { ok: true };
   },
 

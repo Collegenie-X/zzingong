@@ -6,6 +6,7 @@
 // - 태그가 켜져 있는 동안 1초마다 해당 딴짓 시간 누적
 
 import {
+  type CSSProperties,
   forwardRef,
   useCallback,
   useEffect,
@@ -21,7 +22,7 @@ const PRESENCE_TH = 5;
 const NO_MOTION_LIM = 100;
 const NO_PRESENCE_LIM = 50;
 
-type Tag = keyof Distractions;
+export type Tag = keyof Distractions;
 
 const TAG_META: { tag: Tag; icon: string; label: string; color: string }[] = [
   { tag: 'phone', icon: '📱', label: '핸드폰', color: '#e91e63' },
@@ -37,18 +38,37 @@ const TAG_NAMES: Record<Tag, string> = {
   drowsy: '😴 졸음/기타',
 };
 
+interface Shot {
+  id: number;
+  time: string;
+  tag: Tag;
+  url: string;
+}
+
 const ZERO: Distractions = { phone: 0, spacing: 0, away: 0, drowsy: 0 };
 
 export interface MonitorHandle {
   getDistractions: () => Distractions;
+  /** 켜져 있는 딴짓 태그를 끕니다 (레이스 화면의 "정신 차리기" 버튼) */
+  clearTag: () => void;
+}
+
+/** 레이스 화면에 넘겨 주는 가짜 공부 현황 */
+export interface FakeStatus {
+  tag: Tag | null;
+  /** 누적 가짜 공부(딴짓) 초 */
+  total: number;
+  /** 마지막 딴짓 이후 연속 집중 초 */
+  combo: number;
 }
 
 interface Props {
   active: boolean;
   running: boolean;
+  onStatus?: (s: FakeStatus) => void;
 }
 
-const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ active, running }, ref) {
+const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ active, running, onStatus }, ref) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const motionFillRef = useRef<HTMLDivElement>(null);
@@ -56,11 +76,17 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
 
   const [distractions, setDistractions] = useState<Distractions>(ZERO);
   const [currentTag, setCurrentTag] = useState<Tag | null>(null);
+  const [combo, setCombo] = useState(0);
   const [badge, setBadge] = useState<{ text: string; cls: string }>({ text: '집중 중', cls: 'ok' });
   const [logs, setLogs] = useState<{ time: string; msg: string }[]>([]);
   /** 딴짓이 시작된 순간의 스냅샷 (이 브라우저 메모리에만 보관, 업로드/저장 없음) */
-  const [shots, setShots] = useState<{ id: number; time: string; tag: Tag; url: string }[]>([]);
-  const [viewShot, setViewShot] = useState<string | null>(null);
+  const [shots, setShots] = useState<Shot[]>([]);
+  const [viewShot, setViewShot] = useState<Shot | null>(null);
+  /** 이번 딴짓이 이어진 초 (태그가 바뀌면 0부터) */
+  const [episode, setEpisode] = useState(0);
+  /** 딴짓을 끝냈을 때 잠깐 보여 주는 결과 토스트 */
+  const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
+  const episodeRef = useRef(0);
   const shotCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const shotIdRef = useRef(0);
 
@@ -74,7 +100,6 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
   const noMotionRef = useRef(0);
   const noPresenceRef = useRef(0);
 
-  useImperativeHandle(ref, () => ({ getDistractions: () => distractionsRef.current }), []);
 
   const addLog = useCallback((msg: string) => {
     const time = new Date().toLocaleTimeString('ko-KR', {
@@ -117,6 +142,8 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
     (tag: Tag | null) => {
       currentTagRef.current = tag;
       setCurrentTag(tag);
+      episodeRef.current = 0;
+      setEpisode(0);
     },
     [],
   );
@@ -125,6 +152,7 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
     (tag: Tag) => {
       const cur = currentTagRef.current;
       if (cur === tag) {
+        setToast({ id: Date.now(), text: `✅ 다시 찐공 모드! ${TAG_NAMES[tag]} ${fmtShort(episodeRef.current)} 기록됨` });
         setTag(null);
         setBadge({ text: '집중 중', cls: 'ok' });
         addLog(`${TAG_NAMES[tag]} 종료`);
@@ -132,18 +160,47 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
       }
       if (cur) addLog(`${TAG_NAMES[cur]} 종료`);
       setTag(tag);
+      setCombo(0);
+      setToast(null);
       addLog(`${TAG_NAMES[tag]} 시작`);
       captureShot(tag);
+      // 휴대폰에서는 짧게 진동해 상태가 바뀐 걸 손끝으로도 알려 줍니다
+      navigator.vibrate?.(80);
     },
     [addLog, captureShot, setTag],
   );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getDistractions: () => distractionsRef.current,
+      clearTag: () => {
+        const cur = currentTagRef.current;
+        if (!cur) return;
+        tagDistraction(cur);
+        setBadge({ text: '집중 중', cls: 'ok' });
+      },
+    }),
+    [tagDistraction],
+  );
+
+  // ── 레이스 화면에 현황 전달 ──
+  const total = distractions.phone + distractions.spacing + distractions.away + distractions.drowsy;
+  useEffect(() => {
+    onStatus?.({ tag: currentTag, total, combo });
+  }, [onStatus, currentTag, total, combo]);
 
   // ── 딴짓 시간 누적 (타이머 실행 중 + 태그 활성 시 1초마다) ──
   useEffect(() => {
     if (!active || !running) return;
     const t = setInterval(() => {
       const tag = currentTagRef.current;
-      if (!tag) return;
+      if (!tag) {
+        setCombo((c) => c + 1);
+        return;
+      }
+      episodeRef.current += 1;
+      setEpisode(episodeRef.current);
       setDistractions((prev) => {
         const next = { ...prev, [tag]: prev[tag] + 1 };
         distractionsRef.current = next;
@@ -171,11 +228,13 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
     noPresenceRef.current = 0;
     distractionsRef.current = ZERO;
     setDistractions(ZERO);
+    setCombo(0);
     setTag(null);
     setBadge({ text: '집중 중', cls: 'ok' });
     setLogs([]);
     setShots([]);
     setViewShot(null);
+    setToast(null);
 
     const drawOverlay = (w: number, h: number) => {
       const tagged = currentTagRef.current !== null;
@@ -307,10 +366,18 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
     };
   }, [active, addLog, setTag, tagDistraction]);
 
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2800);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   if (!active) return null;
 
-  const total = distractions.phone + distractions.spacing + distractions.away + distractions.drowsy;
   const max = Math.max(total, 60);
+  const activeMeta = currentTag ? TAG_META.find((t) => t.tag === currentTag)! : null;
+  // 방금 이 딴짓을 시작할 때 찍힌 사진
+  const liveShot = currentTag && shots[0]?.tag === currentTag ? shots[0] : null;
 
   return (
     <div className="card monitor-panel">
@@ -354,17 +421,29 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
               <div className="dist-bar-val">{fmtShort(distractions[t.tag])}</div>
             </div>
           ))}
-          <div className="tag-buttons">
-            {TAG_META.map((t) => (
-              <button
-                key={t.tag}
-                className={`tag-btn${currentTag === t.tag ? ' active' : ''}`}
-                onClick={() => tagDistraction(t.tag)}
-              >
-                <span className="icon">{t.icon}</span>
-                {t.label}
-              </button>
-            ))}
+          <div className={`tag-buttons${currentTag ? ' has-active' : ''}`}>
+            {TAG_META.map((t) => {
+              const on = currentTag === t.tag;
+              return (
+                <button
+                  key={t.tag}
+                  className={`tag-btn${on ? ' active' : ''}`}
+                  style={{ '--tag-color': t.color } as CSSProperties}
+                  aria-pressed={on}
+                  onClick={() => tagDistraction(t.tag)}
+                >
+                  <span className="icon">{t.icon}</span>
+                  <span className="tag-name">{t.label}</span>
+                  {on && (
+                    <span className="tag-live">
+                      <i />
+                      {fmtShort(episode)}
+                    </span>
+                  )}
+                  {on && <span className="tag-hint">눌러서 끝내기</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -379,7 +458,7 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
               <button
                 key={sh.id}
                 className="shot-thumb"
-                onClick={() => setViewShot(sh.url)}
+                onClick={() => setViewShot(sh)}
                 title={`${sh.time} ${TAG_NAMES[sh.tag]}`}
               >
                 {/* 사용자의 웹캠에서 만든 data URL 이라 next/image 대신 img 사용 */}
@@ -395,9 +474,61 @@ const MonitorPanel = forwardRef<MonitorHandle, Props>(function MonitorPanel({ ac
 
       {viewShot && (
         <div className="shot-viewer" role="dialog" aria-label="딴짓 순간 사진" onClick={() => setViewShot(null)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={viewShot} alt="딴짓 순간 사진 크게 보기" />
-          <p>지금 이 모습, 기억해 두세요. 닫으려면 아무 곳이나 누르세요.</p>
+          <div className="shot-viewer-card">
+            <div className="shot-viewer-head">
+              <span>
+                {TAG_NAMES[viewShot.tag]} <small>{viewShot.time}</small>
+              </span>
+              <button className="shot-viewer-close" aria-label="닫기">
+                ✕
+              </button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={viewShot.url} alt={`${viewShot.time} ${TAG_NAMES[viewShot.tag]} 순간 크게 보기`} />
+            <p>이 순간의 내 모습, 기억해 두세요.</p>
+          </div>
+        </div>
+      )}
+
+      {/* 딴짓 중: 어디로 스크롤하든 화면 아래에 상태를 고정해서 보여 줍니다 */}
+      {activeMeta && (
+        <>
+          <div className="fake-dock-spacer" aria-hidden />
+          <div
+            className={`fake-dock${running ? '' : ' paused'}`}
+            role="status"
+            aria-live="polite"
+            style={{ '--tag-color': activeMeta.color } as CSSProperties}
+          >
+            <div className="fake-dock-thumb">
+              {liveShot ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={liveShot.url} alt="딴짓 시작 순간" />
+              ) : (
+                <span>{activeMeta.icon}</span>
+              )}
+              <i className="rec-dot" />
+            </div>
+            <div className="fake-dock-info">
+              <span className="fake-dock-title">
+                {running ? '가짜 공부 기록 중' : '일시정지 · 기록 멈춤'}
+              </span>
+              <span className="fake-dock-tag">
+                {activeMeta.icon} {activeMeta.label}
+                <b>{fmtShort(episode)}</b>
+              </span>
+              <span className="fake-dock-sub">찐공 멈춤 · 오늘 가짜 공부 {fmtShort(total)}</span>
+            </div>
+            <button className="fake-dock-btn" onClick={() => tagDistraction(activeMeta.tag)}>
+              💪<span>정신 차리기</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {toast && (
+        <div key={toast.id} className="fake-toast" role="status">
+          {toast.text}
         </div>
       )}
 

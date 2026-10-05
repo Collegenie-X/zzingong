@@ -8,7 +8,7 @@ import { useScheduleAnchor } from '@/hooks/useScheduleAnchor';
 import { calcTimes, dayConfig, planTotalMinutes } from '@/lib/plan';
 import type { Subject, SubjectInput } from '@/lib/types';
 import PlanSummary from './PlanSummary';
-import SubjectFormModal from './SubjectFormModal';
+import SubjectFormModal, { type SubjectFormModalProps } from './SubjectFormModal';
 
 interface Props {
   subjects: Subject[];
@@ -23,6 +23,8 @@ interface Props {
   onDelete: (name: string) => Promise<string | null>;
   /** 지난 과목 여러 개를 한 번에 건너뛰기 처리 */
   onSkipMany: (names: string[]) => void;
+  /** 개발 환경 전용: 임의의 테스트 기록 추가 */
+  onTestSession?: SubjectFormModalProps['onTestSession'];
 }
 
 /** 모달 상태: 닫힘 | 추가 | 특정 과목 수정 */
@@ -40,6 +42,7 @@ export default function PlanList({
   onEdit,
   onDelete,
   onSkipMany,
+  onTestSession,
 }: Props) {
   const [dragSrc, setDragSrc] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
@@ -261,6 +264,7 @@ export default function PlanList({
           error={formError}
           onSubmit={handleSubmit}
           onCancel={() => setForm(null)}
+          onTestSession={onTestSession}
         />
       )}
     </div>

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 
 const LINKS = [
   { href: '/dashboard', label: '대시보드' },
@@ -13,9 +14,21 @@ const LINKS = [
 export default function Nav() {
   const pathname = usePathname();
   const onTimer = pathname === '/';
+  const ref = useRef<HTMLElement>(null);
+
+  // 모바일에서 학생 바가 네비 바로 아래에 붙도록 네비 높이를 CSS 변수(--nav-h)로 알려 줍니다
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const sync = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   return (
-    <nav className="top-nav">
+    <nav className="top-nav" ref={ref}>
       <Link href="/" className="logo" aria-label="ZZINGONG AI 홈">
         <Image
           src="/brand/logo-horizontal-dark.svg"

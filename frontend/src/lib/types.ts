@@ -16,6 +16,8 @@ export interface Subject {
   goal_minutes: number;
   color: string;
   done: DoneState;
+  /** done 을 바꾼 날짜 "YYYY-MM-DD" — 다른 날이면 미완료로 봅니다 */
+  done_date?: string;
   sort_order: number;
 }
 
@@ -124,9 +126,23 @@ export interface DashboardOverview {
   week_total_seconds: number;
 }
 
+/** 반 친구 한 명의 날짜별 기록 (분 단위, 이름 없이 익명) */
+export interface PeerDay {
+  study: number;
+  pause: number;
+  subj: Record<string, number>;
+}
+
+export interface PeerStat {
+  is_me: boolean;
+  days: Record<string, PeerDay>;
+}
+
 export interface DashboardData {
   overview: DashboardOverview;
   subjects: SubjectSummary[];
   daily: DailyStat[];
   class_avg: ClassAvg;
+  /** 반 전체 학생(나 포함)의 익명 기록 — 순위 계산용 */
+  peers: PeerStat[];
 }

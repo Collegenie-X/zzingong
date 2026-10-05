@@ -1,10 +1,13 @@
 'use client';
 
 // 타이머 카드: 선택 과목 / 경과 시간 / 진행 바 / 시작·일시정지·종료 버튼 / AI 코멘트
+// 측정이 시작되면 "플레이 모드"로 바뀝니다: 작은 타이머·버튼 + 찐공 vs 가짜 공부 레이스
 
 import { fmtHMS } from '@/lib/format';
 import { calcTimes } from '@/lib/plan';
 import type { Subject } from '@/lib/types';
+import type { FakeStatus } from './MonitorPanel';
+import RaceTrack from './RaceTrack';
 
 interface Props {
   subjects: Subject[];
@@ -14,6 +17,8 @@ interface Props {
   pauseCount: number;
   started: boolean;
   comment: string;
+  fake: FakeStatus;
+  onFocusBack: () => void;
   onStart: () => void;
   onPause: () => void;
   onStop: () => void;
@@ -27,6 +32,8 @@ export default function TimerPanel({
   pauseCount,
   started,
   comment,
+  fake,
+  onFocusBack,
   onStart,
   onPause,
   onStop,
@@ -57,6 +64,56 @@ export default function TimerPanel({
     } else {
       sub = '시작 버튼을 눌러주세요';
     }
+  }
+
+  if (subject && started) {
+    const goalSec = subject.goal_minutes * 60;
+    const real = Math.max(elapsed - fake.total, 0);
+    const left = goalSec - real;
+    return (
+      <div className={`card timer-section play${running ? ' running' : ''}`}>
+        {/* 모바일에서는 play-head 가 화면 위에 고정되므로 그 자리를 비워 둡니다 */}
+        <div className="play-head-spacer" aria-hidden />
+        <div className={`play-head${!running ? ' paused' : fake.tag ? ' fake' : ''}`}>
+          <div className="play-info">
+            <span className="play-subject" style={{ color: subject.color }}>
+              <i style={{ background: subject.color }} />
+              {subject.name}
+            </span>
+            <span className="play-clock">{fmtHMS(elapsed)}</span>
+            <span className="play-left">
+              {!running
+                ? `일시정지 ${pauseCount}회`
+                : left > 0
+                  ? `골까지 찐공 ${fmtHMS(left)}`
+                  : `골인! +${fmtHMS(-left)}`}
+            </span>
+          </div>
+          <div className="timer-buttons play-buttons">
+            {running ? (
+              <button className="btn btn-pause" onClick={onPause} aria-label="일시정지">
+                ❚❚ 일시정지
+              </button>
+            ) : (
+              <button className="btn btn-start" onClick={onStart} aria-label="계속하기">
+                ▶ 계속
+              </button>
+            )}
+            <button className="btn btn-stop" onClick={onStop} aria-label="종료하고 저장">
+              ■ 종료 &amp; 저장
+            </button>
+          </div>
+        </div>
+        <RaceTrack
+          color={subject.color}
+          elapsed={elapsed}
+          goalSec={goalSec}
+          running={running}
+          fake={fake}
+          onFocusBack={onFocusBack}
+        />
+      </div>
+    );
   }
 
   return (

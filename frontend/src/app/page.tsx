@@ -5,15 +5,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import StudentBar from '@/components/StudentBar';
 import DateTimeHeader from '@/components/timer/DateTimeHeader';
-import MonitorPanel, { MonitorHandle } from '@/components/timer/MonitorPanel';
+import MonitorPanel, { FakeStatus, MonitorHandle } from '@/components/timer/MonitorPanel';
 import PlanList from '@/components/timer/PlanList';
 import TodaySummary from '@/components/timer/TodaySummary';
 import TimerPanel from '@/components/timer/TimerPanel';
 import TodayLog from '@/components/timer/TodayLog';
 import { useSelectedStudent } from '@/hooks/useSelectedStudent';
 import { api } from '@/lib/api';
-import type { SessionRecord, Subject, SubjectInput } from '@/lib/types';
+import type { Distractions, SessionRecord, Subject, SubjectInput } from '@/lib/types';
 import '@/styles/timer.css';
+
+const NO_FAKE: FakeStatus = { tag: null, total: 0, combo: 0 };
 
 export default function TimerPage() {
   const [studentId, setStudentId] = useSelectedStudent();
@@ -25,6 +27,7 @@ export default function TimerPage() {
   const [started, setStarted] = useState(false);
   const [pauseCount, setPauseCount] = useState(0);
   const [comment, setComment] = useState('');
+  const [fake, setFake] = useState<FakeStatus>(NO_FAKE);
 
   const pauseSecRef = useRef(0);
   const pauseStartRef = useRef<number | null>(null);
@@ -114,10 +117,34 @@ export default function TimerPage() {
     }
 
     setStarted(false);
+    setFake(NO_FAKE);
     setElapsed(0);
     setPauseCount(0);
     pauseSecRef.current = 0;
     startTimeRef.current = null;
+  };
+
+  // ── 테스트용: 과목 수정 모달에서 임의의 기록을 바로 추가 (개발 환경 전용) ──
+  const handleTestSession = async (subject: string, studyMin: number, distMin: number, kind: keyof Distractions) => {
+    if (!studentId) return '학생을 먼저 선택해 주세요';
+    const study = Math.round(studyMin * 60);
+    const dist = Math.round(distMin * 60);
+    const end = new Date();
+    const start = new Date(end.getTime() - (study + dist) * 1000);
+    const res = await api.saveSession({
+      student_id: studentId,
+      subject,
+      start_time: start.toISOString(),
+      end_time: end.toISOString(),
+      duration_seconds: study,
+      pause_count: 0,
+      pause_seconds: 0,
+      distraction_seconds: dist,
+      distractions: { phone: 0, spacing: 0, away: 0, drowsy: 0, [kind]: dist },
+    });
+    if (!res.ok) return res.error ?? '저장 실패';
+    await loadSessions();
+    return null;
   };
 
   // ── 과목 조작 ──
@@ -171,20 +198,20 @@ export default function TimerPage() {
   // ── 계획 카드/타이머 버튼 밖을 클릭하면 선택 해제 ──
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (running || !selected) return;
+      if (running || started || !selected) return;
       const target = e.target as HTMLElement;
       if (target.closest('[data-plan-card]') || target.closest('.timer-buttons')) return;
       setSelected(null);
     };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
-  }, [running, selected]);
+  }, [running, started, selected]);
 
   return (
     <>
       <StudentBar studentId={studentId} onChange={setStudentId} editable onMutate={loadSessions} />
       <DateTimeHeader />
-      <TodaySummary studentId={studentId} sessions={sessions} subjects={subjects} />
+      <TodaySummary studentId={studentId} sessions={sessions} subjects={subjects} selected={selected} />
       <div className="timer-main">
         <PlanList
           subjects={subjects}
@@ -198,6 +225,7 @@ export default function TimerPage() {
           onEdit={handleEditSubject}
           onDelete={handleDeleteSubject}
           onSkipMany={handleSkipMany}
+          onTestSession={process.env.NODE_ENV !== 'production' ? handleTestSession : undefined}
         />
         <div>
           <TimerPanel
@@ -208,12 +236,14 @@ export default function TimerPage() {
             pauseCount={pauseCount}
             started={started}
             comment={comment}
+            fake={fake}
+            onFocusBack={() => monitorRef.current?.clearTag()}
             onStart={startTimer}
             onPause={pauseTimer}
             onStop={stopTimer}
           />
           <TodayLog sessions={sessions} subjects={subjects} hidden={started} />
-          <MonitorPanel ref={monitorRef} active={started} running={running} />
+          <MonitorPanel ref={monitorRef} active={started} running={running} onStatus={setFake} />
         </div>
       </div>
     </>

@@ -152,3 +152,24 @@ nav.top-nav .nav-links::-webkit-scrollbar { display: none; }
   /* 손가락으로 누를 수 있는 최소 높이 확보 */
   .student-bar .stu-btn { padding: 6px 10px; font-size: 0.72rem; min-height: 30px; }
 }
+
+/* 모바일: 네비 + 학생 바를 화면 위에 고정 (스크롤해도 항상 보이게) */
+@media (max-width: 780px) {
+  nav.top-nav { position: sticky; top: 0; z-index: 50; }
+  .student-bar {
+    position: sticky; top: var(--nav-h, 50px); z-index: 49;
+    box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* ── 게임 SVG 아이콘 공용 스타일 (GameIcons: 타이머·대시보드 공용) ── */
+.gi-line { fill: none; stroke: #1b1d3a; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.gi-hero { display: block; overflow: visible; }
+.gi-hero.mood-fire .gi-flame { animation: gi-flicker 0.9s ease-in-out infinite alternate; transform-origin: 32px 56px; }
+.gi-hero .gi-zzz { animation: gi-float 2.4s ease-in-out infinite; }
+.gi-hero .gi-spin { animation: gi-spin 2.4s linear infinite; transform-origin: 8px 15px; }
+.gi-hero.mood-strong, .gi-hero.mood-sprout { animation: gi-bob 1.6s ease-in-out infinite; }
+@keyframes gi-flicker { to { transform: scale(1.06, 1.12); opacity: 1; } }
+@keyframes gi-float { 50% { transform: translateY(-3px); opacity: 0.6; } }
+@keyframes gi-spin { to { transform: rotate(360deg); } }
+@keyframes gi-bob { 50% { transform: translateY(-2px); } }
