@@ -42,6 +42,18 @@ export function hm(d: Date): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+/** ISO 문자열(UTC 저장) → 로컬 "HH:MM" */
+export function isoHM(iso: string): string {
+  return iso ? hm(new Date(iso)) : '-';
+}
+
+/** ISO 문자열(UTC 저장) → 로컬 "YYYY-MM-DD HH:MM:SS" */
+export function isoLocal(iso: string): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return `${toDateStr(d)} ${hm(d)}:${String(d.getSeconds()).padStart(2, '0')}`;
+}
+
 /** "YYYY-MM-DD" → "M/D" */
 export function dateLabel(ds: string): string {
   const d = new Date(ds + 'T00:00:00');

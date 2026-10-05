@@ -11,6 +11,7 @@ export const KEYS = {
   sessions: `${PREFIX}sessions`,
   selectedStudent: `${PREFIX}student_id`,
   seeded: `${PREFIX}seeded`,
+  dummyVersion: `${PREFIX}dummy_version`,
 } as const;
 
 export function readJSON<T>(key: string, fallback: T): T {

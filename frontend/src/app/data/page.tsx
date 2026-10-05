@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { api } from '@/lib/api';
+import { isoHM, isoLocal, todayStr } from '@/lib/format';
 import type { SessionRecord, Student, Subject } from '@/lib/types';
 import DetailModal, { type DetailTarget } from '@/components/data/DetailModal';
 import '@/styles/data.css';
@@ -136,10 +137,10 @@ export default function DataPage() {
     { key: 'date', label: '날짜', sort: (s) => s.date, render: (s) => <span className="mono">{s.date}</span> },
     {
       key: 'time', label: '시간대', sort: (s) => s.start_time,
-      text: (s) => `${s.start_time.slice(11, 16)} ${s.end_time.slice(11, 16)}`,
+      text: (s) => `${isoHM(s.start_time)} ${isoHM(s.end_time)}`,
       render: (s) => (
         <span className="mono dim">
-          {s.start_time.slice(11, 16)} – {s.end_time.slice(11, 16)}
+          {isoHM(s.start_time)} – {isoHM(s.end_time)}
         </span>
       ),
     },
@@ -176,7 +177,7 @@ export default function DataPage() {
       key: 'count', label: '세션 수', num: true,
       sort: (s) => sessionCounts.get(s.id) ?? 0,
     },
-    { key: 'created', label: '생성일', sort: (s) => s.created_at, render: (s) => <span className="mono dim">{s.created_at.slice(0, 16).replace('T', ' ')}</span> },
+    { key: 'created', label: '생성일', sort: (s) => s.created_at, render: (s) => <span className="mono dim">{isoLocal(s.created_at).slice(0, 16)}</span> },
   ];
 
   const subjectCols: Column<Subject>[] = [
@@ -249,7 +250,7 @@ export default function DataPage() {
 
   // ── 데이터 관리 ──
   const handleDummy = async () => {
-    if (!confirm('기존 데이터가 삭제되고 더미 데이터(학생 20명 × 30일)가 새로 생성됩니다. 계속하시겠습니까?')) return;
+    if (!confirm('기존 데이터가 삭제되고 더미 데이터(학생 20명 × 90일)가 새로 생성됩니다. 계속하시겠습니까?')) return;
     await api.regenerateDummy();
     await load();
   };
@@ -266,7 +267,7 @@ export default function DataPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `study-timer-data-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `study-timer-data-${todayStr()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

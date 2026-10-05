@@ -7,7 +7,7 @@
 // 팝업 안에서 학생 ↔ 세션으로 이동할 수 있도록 onOpen 으로 대상을 바꿉니다.
 
 import { useEffect, useMemo, type CSSProperties, type ReactNode } from 'react';
-import { WEEKDAYS, fmtKorean } from '@/lib/format';
+import { WEEKDAYS, fmtKorean, isoHM, isoLocal, toDateStr } from '@/lib/format';
 import type { SessionRecord, Student, Subject } from '@/lib/types';
 
 export type DetailTarget =
@@ -34,7 +34,6 @@ const DISTRACTIONS = [
 
 const DONE_LABEL = ['미완료', '완료', '건너뛰기'] as const;
 const sum = (xs: number[]) => xs.reduce((a, x) => a + x, 0);
-const hm = (iso: string) => iso.slice(11, 16);
 const fmtSec = (sec: number) => (sec > 0 && sec < 60 ? `${Math.round(sec)}초` : fmtKorean(sec));
 const fmtDate = (d: string) => `${d.slice(5).replace('-', '.')} (${WEEKDAYS[new Date(d + 'T00:00:00').getDay()]})`;
 
@@ -186,7 +185,7 @@ function SessionList({ list, ctx, showStudent }: { list: SessionRecord[]; ctx: C
           <Chip name={s.subject} color={ctx.colorOf(s.subject)} />
           {showStudent && <span className="who-sm">{ctx.nameOf(s.student_id)}</span>}
           <span className="when">
-            {fmtDate(s.date)} {hm(s.start_time)}
+            {fmtDate(s.date)} {isoHM(s.start_time)}
           </span>
           <b>{fmtSec(s.duration_seconds)}</b>
           <span className="go">›</span>
@@ -220,7 +219,7 @@ function SessionDetail({ s, ...ctx }: { s: SessionRecord } & Ctx) {
           </button>
         </div>
         <p className="dm-sub">
-          {fmtDate(s.date)} · {hm(s.start_time)} – {hm(s.end_time)}
+          {fmtDate(s.date)} · {isoHM(s.start_time)} – {isoHM(s.end_time)}
         </p>
       </header>
 
@@ -259,11 +258,11 @@ function SessionDetail({ s, ...ctx }: { s: SessionRecord } & Ctx) {
 
       <dl className="dm-meta">
         <dt>시작</dt>
-        <dd>{s.start_time.replace('T', ' ').slice(0, 19)}</dd>
+        <dd>{isoLocal(s.start_time)}</dd>
         <dt>종료</dt>
-        <dd>{s.end_time.replace('T', ' ').slice(0, 19)}</dd>
+        <dd>{isoLocal(s.end_time)}</dd>
         <dt>저장</dt>
-        <dd>{s.created_at.replace('T', ' ').slice(0, 19)}</dd>
+        <dd>{isoLocal(s.created_at)}</dd>
       </dl>
     </>
   );
@@ -300,7 +299,7 @@ function StudentDetail({ st, ...ctx }: { st: Student } & Ctx) {
           <h3>{st.name}</h3>
         </div>
         <p className="dm-sub">
-          <span className="mono">{st.id}</span> · 가입 {st.created_at.slice(0, 10)}
+          <span className="mono">{st.id}</span> · 가입 {toDateStr(new Date(st.created_at))}
         </p>
       </header>
 

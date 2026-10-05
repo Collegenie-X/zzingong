@@ -1,142 +1,110 @@
-// ── 더미 데이터 생성 (generate_dummy.py 포팅) ──
-// 반 평균 비교 대시보드를 테스트하기 위해 20명의 가상 학생과
-// 최근 30일 세션을 생성합니다. 시드 고정으로 항상 같은 패턴이 나옵니다.
-// 명단의 type이 'me'인 학생이 '나'이며, 1주·1달은 반 me_rank등, 오늘은 me_today_rank등이 되고
-// 이번 주 공부량이 쭉 오르는 흐름이 되도록 보정합니다.
+// ── 더미 데이터 불러오기 ──
+// 학생 20명의 세션 기록은 src/data/students/<id>.json 에 학생마다 따로 들어 있습니다.
+// (scripts/generate-dummy-students.mjs 로 다시 만들 수 있고, JSON을 직접 고쳐도 됩니다)
+// 파일의 날짜는 생성일(generated_on) 기준이므로, 오늘과의 차이만큼 밀어서 항상 "최근 90일"로 만듭니다.
+// 용량이 커서 처음 시드할 때만 동적으로 불러옵니다.
 
-import dummyConfig from '@/data/dummy-students.json';
-import { createRng, shortId } from './random';
-import { daysAgoStr } from './format';
-import type { SessionRecord, Student, Subject } from './types';
+import { hashString, shortId } from './random';
+import { todayStr } from './format';
+import type { SessionRecord, Student } from './types';
 
-interface Profile {
-  effort: number[];
-  consistency: number[];
-  weekend_drop: number;
-  /** 과목 순서별 공부량 배율 (강한 과목·약한 과목 표현) */
-  subject_bias?: number[];
+/** src/data/students/*.json 한 파일의 형식 */
+export interface DummyStudentFile {
+  id: string;
+  name: string;
+  is_me: boolean;
+  persona: string;
+  trend: string;
+  note: string;
+  /** 파일을 만든 날 (YYYY-MM-DD) */
+  generated_on: string;
+  /** 앱 가입일 (YYYY-MM-DD) */
+  joined: string;
+  sessions: {
+    date: string;
+    /** 시작 시각 HH:MM:SS (로컬) */
+    start: string;
+    subject: string;
+    /** 순공 (초) */
+    study: number;
+    /** 일시정지 (초) */
+    pause: number;
+    /** 일시정지 횟수 */
+    pauses: number;
+    /** 딴짓 (초) [폰, 멍때림, 자리비움, 졸음] */
+    dist: number[];
+  }[];
 }
 
-export function generateDummyData(subjects: Subject[]): {
+/** 더미 학생 ID — 파일 id 로 고정 */
+export const dummyStudentId = (fileId: string) => shortId(`dummy_${fileId}`);
+
+/** 예전 버전(영문 이름 20명) 더미 학생 ID — 새 더미로 바꿀 때 지웁니다 */
+export const LEGACY_DUMMY_IDS = ['Alice', 'Bob', 'Charlie', 'Diana', '나', 'Fiona', 'George', 'Hannah', 'Ian', 'Julia', 'Kevin', 'Luna', 'Mike', 'Nora', 'Oscar', 'Paul', 'Quinn', 'Rachel', 'Sam', 'Tina'].map(
+  (name, i) => shortId(`${name}_${i}`),
+);
+
+/** 더미 데이터가 바뀌면 값이 달라져, 저장된 예전 더미를 새것으로 바꾸는 데 씁니다 */
+let versionCache: string | null = null;
+export async function dummyVersion(): Promise<string> {
+  if (!versionCache) {
+    const { DUMMY_STUDENTS } = await import('@/data/students');
+    versionCache = hashString(JSON.stringify(DUMMY_STUDENTS)).toString(16);
+  }
+  return versionCache;
+}
+
+const DAY_MS = 86400000;
+const utc = (ds: string) => Date.UTC(+ds.slice(0, 4), +ds.slice(5, 7) - 1, +ds.slice(8, 10));
+
+export async function generateDummyData(): Promise<{
   students: Student[];
   sessions: SessionRecord[];
   /** 기본 선택할 '나' 학생 ID */
   meId: string;
-} {
-  const days: number = dummyConfig.days;
-  const profiles = dummyConfig.profiles as Record<string, Profile>;
+}> {
+  const { DUMMY_STUDENTS } = await import('@/data/students');
   const students: Student[] = [];
   const sessions: SessionRecord[] = [];
   let sessionId = 1;
   let meId = '';
+  const today = utc(todayStr());
 
-  dummyConfig.students.forEach((st, si) => {
-    const id = shortId(`${st.name}_${si}`);
-    students.push({ id, name: st.name, created_at: new Date().toISOString() });
-    if (st.type === 'me') meId = id;
+  for (const file of DUMMY_STUDENTS) {
+    const id = dummyStudentId(file.id);
+    if (file.is_me) meId = id;
+    const shift = Math.round((today - utc(file.generated_on)) / DAY_MS);
+    // 로컬 날짜로 변환 (shift 일 만큼 뒤로)
+    const local = (ds: string, sec = 0) => new Date(+ds.slice(0, 4), +ds.slice(5, 7) - 1, +ds.slice(8, 10) + shift, 0, 0, sec);
+    const dateOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-    const rng = createRng(42 + si * 100);
-    const prof = profiles[st.type];
-    const effort = rng.uniform(prof.effort[0], prof.effort[1]);
-    const consistency = rng.uniform(prof.consistency[0], prof.consistency[1]);
+    students.push({ id, name: file.name, created_at: local(file.joined, 9 * 3600).toISOString() });
 
-    for (let offset = 0; offset < days; offset++) {
-      const ds = daysAgoStr(days - 1 - offset);
-      const weekday = new Date(ds + 'T00:00:00').getDay();
-      const isWeekend = weekday === 0 || weekday === 6;
-      let hour = rng.randint(7, 10);
-      const dayMood = rng.uniform(0.6, 1.4);
-
-      for (const [subjIdx, subj] of subjects.entries()) {
-        const threshold = consistency * (isWeekend ? 1.0 - prof.weekend_drop : 1.0);
-        if (rng.next() > threshold * dayMood) continue;
-
-        let numSessions = 1;
-        if ((st.type === 'top' || st.type === 'me') && rng.next() < 0.4) numSessions = 2;
-        else if (st.type === 'avg' && rng.next() < 0.2) numSessions = 2;
-
-        for (let k = 0; k < numSessions; k++) {
-          const baseDur = subj.goal_minutes * 60 * effort * dayMood * (prof.subject_bias?.[subjIdx] ?? 1);
-          const dur = Math.max(300, Math.floor(baseDur * rng.uniform(0.5, 1.3)));
-          const pc = rng.randint(0, st.type === 'lazy' || st.type === 'ghost' ? 4 : 2);
-          const ps = pc * rng.randint(30, 120);
-          const endSec = hour * 3600 + dur + ps;
-          const eh = Math.min(Math.floor(endSec / 3600), 23);
-          const em = Math.floor((endSec % 3600) / 60);
-          sessions.push({
-            id: sessionId++,
-            student_id: id,
-            subject: subj.name,
-            start_time: `${ds}T${String(hour).padStart(2, '0')}:00:00.000Z`,
-            end_time: `${ds}T${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}:00.000Z`,
-            duration_seconds: dur,
-            pause_count: pc,
-            pause_seconds: ps,
-            distraction_seconds: 0,
-            distraction_phone: 0,
-            distraction_spacing: 0,
-            distraction_away: 0,
-            distraction_drowsy: 0,
-            date: ds,
-            created_at: new Date().toISOString(),
-          });
-          hour = Math.min(eh + 1, 22);
-        }
-      }
+    for (const s of file.sessions) {
+      const [h, m, sec] = s.start.split(':').map(Number);
+      const start = local(s.date, h * 3600 + m * 60 + sec);
+      const [phone = 0, spacing = 0, away = 0, drowsy = 0] = s.dist;
+      const distSec = phone + spacing + away + drowsy;
+      const end = new Date(start.getTime() + (s.study + s.pause + distSec) * 1000);
+      sessions.push({
+        id: sessionId++,
+        student_id: id,
+        subject: s.subject,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        duration_seconds: s.study,
+        pause_count: s.pauses,
+        pause_seconds: s.pause,
+        distraction_seconds: distSec,
+        distraction_phone: phone,
+        distraction_spacing: spacing,
+        distraction_away: away,
+        distraction_drowsy: drowsy,
+        date: dateOf(start),
+        created_at: end.toISOString(),
+      });
     }
-  });
-
-  if (meId) calibrateRank(sessions, meId, dummyConfig.me_rank, dummyConfig.me_today_rank, days);
-  return { students, sessions, meId };
-}
-
-/**
- * '나'의 하루 공부량을 "꾸준하다가 이번 주에 쭉 오르는" 모양으로 다시 배분합니다.
- *   첫날 A(=B×0.9) → 7일 전 B → 오늘 H 로 이어지는 꺾은선
- * - 최근 7일 · 전체 기간 순공 합계는 반 rank등, 오늘은 반 todayRank등 구간 안에 들어가게 하고
- * - 그 조건 안에서 B를 최대한 낮게 잡아 이번 주 상승폭을 키웁니다.
- */
-function calibrateRank(sessions: SessionRecord[], meId: string, rank: number, todayRank: number, days: number): void {
-  const rng = createRng(7);
-  // 기간별 "그 순위가 되는 합계 구간" [lo, hi] (분)
-  const range = (span: number, r: number) => {
-    const from = daysAgoStr(span - 1);
-    const totals = new Map<string, number>();
-    for (const s of sessions) {
-      if (s.student_id !== meId && s.date >= from) totals.set(s.student_id, (totals.get(s.student_id) ?? 0) + s.duration_seconds / 60);
-    }
-    const others = [...totals.values()].sort((a, b) => b - a);
-    const lo = others[r - 1] ?? 0;
-    const hi = others[r - 2] ?? lo * 1.5 + 60;
-    return { lo, hi, need: lo + (hi - lo) * 0.05 };
-  };
-  const today = range(1, todayRank);
-  const week = range(7, rank);
-  const month = range(days, rank);
-  if (today.hi - today.lo < 2 || week.hi - week.lo < 2 || month.hi - month.lo < 2) return;
-
-  // 내 세션이 있는 날만 목표를 맞출 수 있으므로 그 날들로 합계를 계산
-  const mine = sessions.filter((s) => s.student_id === meId);
-  const offsets = Array.from({ length: days }, (_, o) => o).filter((o) => mine.some((s) => s.date === daysAgoStr(days - 1 - o)));
-  const k = days - 7; // 7일 전 = 꺾이는 지점
-  // 하루 목표 = B * wB(o) + H * wH(o)
-  const wB = (o: number) => (o <= k ? 0.9 + (0.1 * o) / Math.max(k, 1) : 1 - (o - k) / 6);
-  const wH = (o: number) => (o <= k ? 0 : (o - k) / 6);
-  const H = today.lo + (today.hi - today.lo) * 0.8;
-  const minB = (need: number, from: number) => {
-    const os = offsets.filter((o) => o >= from);
-    const b = os.reduce((a, o) => a + wB(o), 0);
-    return b > 0 ? (need - H * os.reduce((a, o) => a + wH(o), 0)) / b : 0;
-  };
-  const B = Math.min(Math.max(minB(week.need, k + 1), minB(month.need, 0)), H);
-
-  for (const o of offsets) {
-    const ds = daysAgoStr(days - 1 - o);
-    const daySess = mine.filter((s) => s.date === ds);
-    const sum = daySess.reduce((a, s) => a + s.duration_seconds, 0);
-    // 오늘은 그대로, 이번 주는 ±2%, 그 전은 ±6% 흔들어 자연스럽게
-    const jitter = o === days - 1 ? 1 : o > k ? rng.uniform(0.98, 1.02) : rng.uniform(0.94, 1.06);
-    const f = ((B * wB(o) + H * wH(o)) * 60 * jitter) / sum;
-    for (const s of daySess) s.duration_seconds = Math.max(300, Math.round(s.duration_seconds * f));
   }
+
+  return { students, sessions, meId };
 }

@@ -4,7 +4,7 @@
 
 import planConfig from '@/data/subjects.json';
 import { generateComment } from '../comment';
-import { generateDummyData } from '../dummy';
+import { LEGACY_DUMMY_IDS, dummyVersion, generateDummyData } from '../dummy';
 import { todayStr } from '../format';
 import { shortId } from '../random';
 import { buildDashboard } from '../stats';
@@ -48,25 +48,61 @@ function loadSessions(): SessionRecord[] {
   return readJSON<SessionRecord[]>(KEYS.sessions, []);
 }
 
-function ensureSeed(): void {
-  if (typeof window === 'undefined') return;
-  if (readJSON<boolean>(KEYS.seeded, false)) return;
-  seedDummy();
+let seeding: Promise<void> | null = null;
+
+/**
+ * 처음이면 더미 데이터를 만들고, 더미 데이터 파일이 바뀌었으면(버전이 다르면)
+ * 저장된 예전 더미 학생만 새것으로 바꿉니다. 직접 추가한 학생·기록은 그대로 둡니다.
+ */
+function ensureSeed(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  seeding ??= (async () => {
+    const version = await dummyVersion();
+    if (!readJSON<boolean>(KEYS.seeded, false)) await seedDummy(version);
+    else if (readJSON<string>(KEYS.dummyVersion, '') !== version) await refreshDummy(version);
+  })().finally(() => {
+    seeding = null;
+  });
+  return seeding;
 }
 
-/** 더미 데이터를 새로 만들고, 더미의 '나' 학생을 기본 선택합니다 */
-function seedDummy(): void {
-  const subjects = seedSubjects as Subject[];
-  writeJSON(KEYS.subjects, subjects);
-  const { students, sessions, meId } = generateDummyData(subjects);
-  writeJSON(KEYS.students, students);
-  writeJSON(KEYS.sessions, sessions);
-  writeJSON(KEYS.seeded, true);
+function selectStudent(id: string): void {
   try {
-    if (meId) window.localStorage.setItem(KEYS.selectedStudent, meId);
+    if (id) window.localStorage.setItem(KEYS.selectedStudent, id);
   } catch {
     // ignore
   }
+}
+
+/** 더미 데이터를 새로 만들고, 더미의 '나' 학생을 기본 선택합니다 */
+async function seedDummy(version?: string): Promise<void> {
+  const subjects = seedSubjects as Subject[];
+  writeJSON(KEYS.subjects, subjects);
+  const { students, sessions, meId } = await generateDummyData();
+  writeJSON(KEYS.students, students);
+  writeJSON(KEYS.sessions, sessions);
+  writeJSON(KEYS.seeded, true);
+  writeJSON(KEYS.dummyVersion, version ?? (await dummyVersion()));
+  selectStudent(meId);
+}
+
+/** 예전 더미 학생·세션만 새 더미로 교체 */
+async function refreshDummy(version: string): Promise<void> {
+  const { students, sessions, meId } = await generateDummyData();
+  const dummyIds = new Set([...LEGACY_DUMMY_IDS, ...students.map((s) => s.id)]);
+  const ownStudents = loadStudents().filter((s) => !dummyIds.has(s.id));
+  const ownSessions = loadSessions().filter((s) => !dummyIds.has(s.student_id));
+  let id = sessions.length;
+  writeJSON(KEYS.students, [...students, ...ownStudents]);
+  writeJSON(KEYS.sessions, [...sessions, ...ownSessions.map((s) => ({ ...s, id: ++id }))]);
+  writeJSON(KEYS.dummyVersion, version);
+  let selected = '';
+  try {
+    selected = window.localStorage.getItem(KEYS.selectedStudent) ?? '';
+  } catch {
+    // ignore
+  }
+  if (!selected || dummyIds.has(selected) || LEGACY_DUMMY_IDS.includes(selected)) selectStudent(meId);
 }
 
 function nextSessionId(sessions: SessionRecord[]): number {
@@ -77,7 +113,7 @@ function nextSessionId(sessions: SessionRecord[]): number {
 
 export const localApi: StudyApi = {
   async getStudents() {
-    ensureSeed();
+    await ensureSeed();
     return [...loadStudents()].sort((a, b) => a.created_at.localeCompare(b.created_at));
   },
 
@@ -112,7 +148,7 @@ export const localApi: StudyApi = {
   },
 
   async getSubjects() {
-    ensureSeed();
+    await ensureSeed();
     // 완료/건너뛰기는 그날에만 유효합니다. 날짜가 바뀌면 미완료로 되돌립니다.
     const subjects = loadSubjects();
     const today = todayStr();
@@ -129,7 +165,7 @@ export const localApi: StudyApi = {
   },
 
   async addSubject(input) {
-    ensureSeed();
+    await ensureSeed();
     const subjects = loadSubjects();
     const check = normalizeInput(input, subjects);
     if ('error' in check) return { ok: false, error: check.error };
@@ -256,17 +292,17 @@ export const localApi: StudyApi = {
   },
 
   async getDashboard(days, studentId) {
-    ensureSeed();
+    await ensureSeed();
     return buildDashboard(days, studentId, await this.getSubjects(), loadStudents(), loadSessions());
   },
 
   async getAllSessions() {
-    ensureSeed();
+    await ensureSeed();
     return loadSessions();
   },
 
   async regenerateDummy() {
-    seedDummy();
+    await seedDummy();
     return { ok: true };
   },
 
@@ -276,7 +312,7 @@ export const localApi: StudyApi = {
   },
 
   async exportAll() {
-    ensureSeed();
+    await ensureSeed();
     return JSON.stringify(
       {
         exported_at: new Date().toISOString(),
@@ -298,6 +334,8 @@ export const localApi: StudyApi = {
       writeJSON(KEYS.students, data.students);
       writeJSON(KEYS.sessions, data.sessions);
       writeJSON(KEYS.seeded, true);
+      // 가져온 데이터가 새 더미로 덮이지 않도록 현재 버전으로 표시
+      writeJSON(KEYS.dummyVersion, await dummyVersion());
       return { ok: true };
     } catch (e) {
       return { ok: false, error: `JSON 파싱 실패: ${e instanceof Error ? e.message : e}` };
