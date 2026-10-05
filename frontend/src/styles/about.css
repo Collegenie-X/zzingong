@@ -375,7 +375,7 @@
 
 /* 집중 리듬 해설 */
 .rhythm-list { list-style: none; margin-top: 22px; display: grid; gap: 8px; }
-.rhythm-list li {
+.rhythm-list > li {
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -383,8 +383,8 @@
   display: grid;
   gap: 5px;
 }
-.rhythm-list strong { font-size: 0.88rem; color: var(--ink); }
-.rhythm-list span { font-size: 0.82rem; line-height: 1.75; color: var(--dim); }
+.rhythm-list > li > strong { font-size: 0.88rem; color: var(--ink); }
+.rhythm-list > li > span { font-size: 0.82rem; line-height: 1.75; color: var(--dim); }
 
 /* 딴짓 순간 사진 안내 */
 .shot-callout {
@@ -434,6 +434,208 @@
 .steps .n { color: var(--accent); font-weight: 800; font-size: 0.72rem; }
 .steps .t { color: var(--ink); font-weight: 700; }
 .steps .d { color: var(--dim); }
+
+/* 컴퓨터 비전 감지 단계 (웹 / 모바일 ML Kit) */
+.pipeline { list-style: none; margin-top: 24px; display: grid; gap: 8px; }
+.pipeline > li {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(19, 28, 52, 0.55);
+}
+.pipeline > li.web { border-color: rgba(76, 175, 80, 0.45); }
+.pipeline > li.both { border-color: rgba(233, 69, 96, 0.45); }
+.pl-icon { font-size: 1.3rem; line-height: 1.3; flex-shrink: 0; }
+.pl-body { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.pl-more { display: grid; gap: 8px; }
+.pl-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.pl-n { font-size: 0.68rem; font-weight: 800; color: var(--accent); }
+.pl-head strong { font-size: 0.9rem; color: var(--ink); }
+.pl-status {
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.pl-status.web { color: #4ade80; border-color: rgba(74, 222, 128, 0.5); background: rgba(74, 222, 128, 0.08); }
+.pl-status.app { color: #8ab4ff; border-color: rgba(66, 133, 244, 0.55); background: rgba(66, 133, 244, 0.1); }
+.pl-status.both { color: #fda4af; border-color: rgba(233, 69, 96, 0.5); background: rgba(233, 69, 96, 0.1); }
+.pl-api {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.74rem;
+  color: #93a4d4;
+  overflow-wrap: anywhere;
+}
+.pl-desc { font-size: 0.82rem; line-height: 1.75; color: var(--dim); }
+.about .pl-desc mark {
+  background: linear-gradient(transparent 58%, rgba(66, 133, 244, 0.32) 58%);
+}
+
+/* 기능 타일 그리드 */
+.tiles {
+  list-style: none;
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px;
+}
+.fake-title + .tiles { margin-top: 12px; }
+.stage-art + .tiles, .pipeline + .tiles { margin-top: 22px; }
+.tiles li {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(19, 28, 52, 0.55);
+}
+.tile-icon { font-size: 1.25rem; }
+.tiles strong { font-size: 0.88rem; color: var(--ink); }
+.tiles span:not(.tile-icon) { font-size: 0.8rem; line-height: 1.7; color: var(--dim); }
+.about .tiles span mark {
+  background: linear-gradient(transparent 58%, rgba(245, 158, 11, 0.3) 58%);
+}
+
+/* 일러스트 속 작은 움직임 */
+.stage-art .vision-rec { animation: cta-pulse 1.4s ease-in-out infinite; }
+.stage-art .race-runner-art > * { animation: race-bob 0.5s ease-in-out infinite alternate; }
+.stage-art .race-ghost-art > path { animation: race-bob 1.1s ease-in-out infinite alternate; }
+@keyframes race-bob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-3px); }
+}
+
+/* ── 핵심 요약 상자 ── */
+.stage-summary {
+  margin-top: 18px;
+  max-width: 640px;
+  padding: 14px 16px 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(59, 130, 246, 0.06));
+  border: 1px solid rgba(233, 69, 96, 0.3);
+}
+.stage-summary .label {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.stage-summary ul { list-style: none; display: grid; gap: 5px; }
+.stage-summary li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 0.87rem;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.stage-summary li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* ── 열고 닫기 (요약 → 세부 설명) ── */
+.fold-all {
+  margin-top: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--dim);
+  background: rgba(19, 28, 52, 0.6);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.fold-all:hover { color: var(--ink); border-color: var(--accent); }
+.fold-all + * { margin-top: 12px; }
+
+.folds { margin-top: 12px; display: grid; gap: 8px; }
+.fold {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(19, 28, 52, 0.55);
+  transition: border-color 0.2s, background 0.2s;
+}
+.fold.plain { border: none; background: none; }
+.fold[open]:not(.plain) { border-color: rgba(233, 69, 96, 0.45); background: rgba(22, 30, 58, 0.8); }
+.fold > summary {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-radius: 14px;
+}
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:hover .fold-chev { border-color: var(--ink); }
+.fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fold-icon { font-size: 1.15rem; line-height: 1.35; flex-shrink: 0; }
+.fold-head { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.fold-head strong { font-size: 0.88rem; color: var(--ink); }
+.fold-sum { font-size: 0.8rem; line-height: 1.65; color: var(--dim); }
+.fold-chev {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-right: 2px solid var(--faint);
+  border-bottom: 2px solid var(--faint);
+  transform: rotate(45deg);
+  transition: transform 0.2s, border-color 0.2s;
+}
+.fold[open] > summary .fold-chev,
+.fold-all .fold-chev.up { transform: rotate(-135deg); margin-top: 10px; }
+.fold-all .fold-chev { margin-top: -3px; }
+.fold-all .fold-chev.up { margin-top: 3px; }
+.fold-body {
+  padding: 2px 16px 16px 16px;
+  animation: fold-in 0.22s ease-out;
+}
+.fold:not(.plain) .fold-body { padding-left: 44px; }
+.pipeline .fold-body { padding-left: 52px; }
+@keyframes fold-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.fold-text { font-size: 0.83rem; line-height: 1.8; color: var(--dim); }
+.fold-points { list-style: none; margin-top: 8px; display: grid; gap: 6px; }
+.fold-text + .fold-points { margin-top: 10px; }
+.fold-body > .fold-points:first-child { margin-top: 0; }
+.fold-points li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--dim);
+}
+.fold-points li::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0.7em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #60a5fa;
+}
+.about .fold-body mark {
+  background: linear-gradient(transparent 58%, rgba(59, 130, 246, 0.3) 58%);
+}
+.rhythm-list > li.has-fold { padding: 0; }
 
 .note {
   margin-top: 18px;
@@ -490,6 +692,9 @@
   .gap-table .arrow { display: none; }
   .steps li { grid-template-columns: 30px 1fr; }
   .steps .d { grid-column: 2; }
+  .fold > summary { padding: 13px; gap: 10px; }
+  .fold-body, .fold:not(.plain) .fold-body, .pipeline .fold-body { padding: 0 13px 14px; }
+  .tiles { grid-template-columns: 1fr 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -497,7 +702,11 @@
   .scroll-hint .line,
   .stage-nav.stuck .stage-nav-cta .dot,
   .hero-art .key-ring-focus,
-  .hero-art .key-escape { animation: none; }
+  .hero-art .key-escape,
+  .stage-art .vision-rec,
+  .stage-art .race-runner-art > *,
+  .stage-art .race-ghost-art > path,
+  .fold-body { animation: none; }
 }
 
 /* ══════════════════════════════════════════════
@@ -529,11 +738,13 @@
   .stage-lead { font-size: 0.88rem; }
   .stage-art { margin-top: 26px; padding: 10px; }
   .fake-list li { padding: 11px 13px; font-size: 0.82rem; }
-  .rhythm-list li,
+  .rhythm-list > li:not(.has-fold),
   .gap-table li,
   .steps li { padding: 12px 13px; }
-  .rhythm-list span { font-size: 0.8rem; }
+  .rhythm-list > li > span { font-size: 0.8rem; }
   .shot-callout { padding: 15px; }
+  .tiles { grid-template-columns: 1fr; }
+  .tiles li { padding: 13px; }
   .note { font-size: 0.76rem; padding-left: 12px; }
 
   .about-outro { padding: 72px 18px 90px; }

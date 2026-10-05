@@ -356,62 +356,222 @@ export function RhythmArt() {
   );
 }
 
-/** STAGE 04 — 시선·고개·불필요한 동작 체크 + 딴짓 순간 사진 */
-export function WebcamArt() {
-  const items = [
-    { i: '👀', t: '시선 이탈', d: '교재·화면 밖을 오래 봄', c: C.amber },
-    { i: '🙃', t: '고개 돌림', d: '정면에서 벗어난 상태 지속', c: C.amber },
-    { i: '📱', t: '핸드폰', d: '집어 드는 동작', c: C.accent },
-    { i: '🧹', t: '책상 정리', d: '공부와 상관없는 잔동작', c: C.blue },
-    { i: '🚶', t: '자리 비움', d: '화면 변화 없음', c: C.blue },
-    { i: '😴', t: '졸음', d: '눈 감김 · 고개 떨굼', c: C.purple },
+/** 컴퓨터 비전 감지 — 카메라 프레임 위에 ML Kit 신호(얼굴 각도·눈 뜸·포즈·물체)를 겹쳐 보여 주고 판정으로 이어지는 그림 */
+export function VisionArt() {
+  const signals = [
+    { i: '🙃', t: '고개 회전', v: 'Y 38°', c: C.amber, on: true },
+    { i: '👁️', t: '눈 뜸 확률', v: '0.86', c: C.green, on: false },
+    { i: '✋', t: '손목 위치', v: '얼굴 앞', c: C.amber, on: true },
+    { i: '📱', t: '휴대폰', v: '0.91', c: C.accent, on: true },
+  ];
+  // 포즈 랜드마크 (어깨 · 팔꿈치 · 손목)
+  const pose: [number, number][] = [
+    [96, 196],
+    [204, 196],
+    [218, 238],
+    [236, 176],
   ];
   return (
-    <svg viewBox="0 0 560 320" role="img" aria-label="웹캠이 시선과 고개 방향, 불필요한 동작을 확인하는 모습">
-      <rect x="30" y="24" width="292" height="214" rx="16" fill="#0a1020" stroke={C.line} strokeWidth="2" />
+    <svg viewBox="0 0 560 330" role="img" aria-label="카메라 화면에서 얼굴 각도, 눈 뜸, 손목 위치, 휴대폰을 찾아 가짜 공부로 판정하는 모습">
+      {/* 카메라 프레임 */}
+      <rect x="18" y="18" width="300" height="250" rx="16" fill="#0a1020" stroke={C.line} strokeWidth="2" />
+      <circle cx="36" cy="36" r="4" fill={C.accent} className="vision-rec" />
+      <text x="46" y="40" fontSize="11" fill={C.dim}>카메라 · 기기 안에서 분석</text>
 
-      {/* 얼굴 가이드 + 시선 방향 */}
-      <ellipse cx="150" cy="108" rx="40" ry="48" fill="none" stroke={C.amber} strokeWidth="2" strokeDasharray="8 4" opacity="0.8" />
-      <path d="M78 206 q22 -64 72 -56 q50 -8 72 56" fill="none" stroke={C.amber} strokeWidth="2" strokeDasharray="8 4" opacity="0.6" />
-      <circle cx="137" cy="104" r="4.5" fill={C.amber} />
-      <circle cx="161" cy="104" r="4.5" fill={C.amber} />
-      <path d="M168 100 q42 -14 74 -34" stroke={C.amber} strokeWidth="2" strokeDasharray="5 4" fill="none" />
-      <path d="M236 62 l8 4 -3 8" fill="none" stroke={C.amber} strokeWidth="2" strokeLinecap="round" />
-      <text x="248" y="58" fontSize="10.5" fill={C.amber}>시선</text>
+      {/* 얼굴 (오른쪽으로 돌아간 상태) */}
+      <ellipse cx="160" cy="116" rx="38" ry="46" fill="none" stroke={C.dim} strokeWidth="1.6" />
+      {/* 얼굴 감지 상자 */}
+      <rect x="114" y="62" width="96" height="108" rx="6" fill="none" stroke={C.amber} strokeWidth="1.8" strokeDasharray="6 4" />
+      <rect x="114" y="48" width="74" height="16" rx="4" fill={C.amber} />
+      <text x="151" y="60" fontSize="10.5" fontWeight="700" fill="#1a1200" textAnchor="middle">
+        얼굴 Y 38°
+      </text>
+      {/* 얼굴 랜드마크 점 */}
+      {[
+        [150, 104],
+        [176, 104],
+        [168, 124],
+        [156, 142],
+        [174, 142],
+        [132, 112],
+        [190, 96],
+      ].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="2.6" fill={C.amber} />
+      ))}
+      {/* 정면 기준선 vs 지금 방향 */}
+      <path d="M160 116 L160 74" stroke={C.dim} strokeWidth="1.4" strokeDasharray="3 3" />
+      <path d="M160 116 L196 84" stroke={C.amber} strokeWidth="2" />
+      <path d="M160 92 A24 24 0 0 1 177 99" fill="none" stroke={C.amber} strokeWidth="1.6" />
 
-      <rect x="44" y="38" width="118" height="22" rx="11" fill="#e65100" />
-      <text x="103" y="53" fontSize="11.5" fontWeight="700" fill="#ffe0b2" textAnchor="middle">
-        시선 이탈 12초
+      {/* 포즈 골격 */}
+      <path d={`M${pose[0][0]} ${pose[0][1]} L${pose[1][0]} ${pose[1][1]} L${pose[2][0]} ${pose[2][1]} L${pose[3][0]} ${pose[3][1]}`} fill="none" stroke="#38bdf8" strokeWidth="2" opacity="0.85" />
+      <path d="M160 162 L150 196" stroke="#38bdf8" strokeWidth="2" opacity="0.6" />
+      {pose.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="4" fill="#0a1020" stroke="#38bdf8" strokeWidth="2" />
+      ))}
+
+      {/* 휴대폰 감지 상자 */}
+      <rect x="228" y="140" width="22" height="36" rx="4" fill="#1f2a4a" stroke={C.dim} strokeWidth="1.2" />
+      <rect x="220" y="132" width="38" height="52" rx="5" fill="none" stroke={C.accent} strokeWidth="2" />
+      <rect x="220" y="116" width="78" height="16" rx="4" fill={C.accent} />
+      <text x="259" y="128" fontSize="10.5" fontWeight="700" fill="#fff" textAnchor="middle">
+        휴대폰 0.91
       </text>
 
-      {/* 딴짓 순간 사진 */}
-      <text x="30" y="266" fontSize="10.5" fill={C.dim}>딴짓 순간 기록</text>
-      {[0, 1, 2].map((i) => (
-        <g key={i} transform={`translate(${30 + i * 74}, 274)`}>
-          <rect width="66" height="38" rx="6" fill="#0a1020" stroke={C.accent} strokeWidth="1.2" opacity="0.9" />
-          <circle cx="33" cy="16" r="8" fill="none" stroke={C.dim} strokeWidth="1.4" />
-          <path d="M20 34 q6 -12 13 -11 q7 -1 13 11" fill="none" stroke={C.dim} strokeWidth="1.4" />
-          <text x="60" y="11" fontSize="8" fill={C.accent} textAnchor="end">
-            {['📱', '🙃', '🧹'][i]}
+      <text x="34" y="256" fontSize="10.5" fill={C.dim}>
+        얼굴 감지 · 포즈 감지 · 이미지 라벨링
+      </text>
+
+      {/* 신호 → 판정 */}
+      {signals.map((s, i) => (
+        <g key={s.t} transform={`translate(340, ${18 + i * 44})`}>
+          <rect width="202" height="36" rx="10" fill={C.panel} stroke={s.on ? s.c : C.line} strokeWidth="1.4" opacity={s.on ? 1 : 0.7} />
+          <text x="18" y="24" fontSize="14" textAnchor="middle">
+            {s.i}
+          </text>
+          <text x="36" y="23" fontSize="12" fill={C.text}>
+            {s.t}
+          </text>
+          <text x="190" y="23" fontSize="12" fontWeight="700" fill={s.c} textAnchor="end" fontFamily="monospace">
+            {s.v}
           </text>
         </g>
       ))}
-      <text x="256" y="298" fontSize="10" fill={C.dim}>이 컴퓨터에만 남습니다</text>
+      <path d="M441 196 L441 212" stroke={C.accent} strokeWidth="2" />
+      <path d="M435 206 L441 214 L447 206" fill="none" stroke={C.accent} strokeWidth="2" strokeLinecap="round" />
+      <rect x="340" y="218" width="202" height="50" rx="12" fill="rgba(233,69,96,0.14)" stroke={C.accent} strokeWidth="1.8" />
+      <text x="441" y="238" fontSize="11" fill={C.accent} textAnchor="middle" letterSpacing="1">
+        3개 신호 · 6초 지속
+      </text>
+      <text x="441" y="258" fontSize="14" fontWeight="800" fill="#fff" textAnchor="middle">
+        가짜 공부 · 📱 핸드폰
+      </text>
 
-      {/* 감지 항목 */}
-      {items.map((v, i) => (
-        <g key={v.t} transform={`translate(${346 + (i % 1) * 0}, ${22 + i * 46})`}>
-          <rect width="190" height="38" rx="11" fill={C.panel} stroke={C.line} strokeWidth="1.3" />
-          <text x="20" y="25" fontSize="14" textAnchor="middle">{v.i}</text>
-          <text x="38" y="18" fontSize="12" fontWeight="700" fill={v.c}>{v.t}</text>
-          <text x="38" y="31" fontSize="9.5" fill={C.dim}>{v.d}</text>
+      {/* 하단: 온디바이스 흐름 */}
+      {['프레임', 'ML Kit 모델', '신호', '지속 시간 규칙', '태그'].map((t, i) => (
+        <g key={t} transform={`translate(${18 + i * 108}, 290)`}>
+          <rect width="92" height="26" rx="13" fill={i === 1 ? 'rgba(66,133,244,0.18)' : C.panel} stroke={i === 1 ? '#4285f4' : C.line} strokeWidth="1.2" />
+          <text x="46" y="17.5" fontSize="11" fill={i === 1 ? '#8ab4ff' : C.text} textAnchor="middle">
+            {t}
+          </text>
+          {i < 4 && <path d={`M96 13 L104 13`} stroke={C.dim} strokeWidth="1.4" />}
         </g>
       ))}
     </svg>
   );
 }
 
-/** STAGE 05 — 계획 → 타이머 → 저장 흐름 */
+/** 레이스 화면 — 찐공 러너가 달리고 가짜 공부 유령이 쫓아오는 실제 측정 화면을 축약한 그림 */
+export function RaceArt() {
+  const X0 = 40;
+  const X1 = 500;
+  const G = 150;
+  const runnerX = X0 + (X1 - X0) * 0.58;
+  const ghostX = X0 + (X1 - X0) * 0.15;
+  const stats = [
+    { l: '💪 찐공', v: '00:42:10', c: C.green },
+    { l: '👻 가짜 공부', v: '6:20', c: C.purple },
+    { l: '💎 순도', v: '87%', c: '#38bdf8' },
+    { l: '🔥 콤보', v: '12:30', c: '#f97316' },
+  ];
+  return (
+    <svg viewBox="0 0 560 330" role="img" aria-label="찐공 러너가 결승선을 향해 달리고 가짜 공부 유령이 뒤쫓는 레이스 화면">
+      <defs>
+        <linearGradient id="raceSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1a1446" />
+          <stop offset="100%" stopColor="#0b1026" />
+        </linearGradient>
+      </defs>
+      <rect x="10" y="10" width="540" height="190" rx="16" fill="url(#raceSky)" stroke={C.line} strokeWidth="1.6" />
+      {/* 도시 실루엣 */}
+      {[30, 70, 96, 150, 210, 250, 300, 360, 410, 452, 500].map((x, i) => (
+        <rect key={x} x={x} y={G - 30 - ((i * 37) % 50)} width={i % 2 ? 26 : 34} height={30 + ((i * 37) % 50)} fill="#151a3d" />
+      ))}
+      {[[60, 30], [180, 44], [320, 26], [430, 50], [520, 34]].map(([x, y]) => (
+        <circle key={x} cx={x} cy={y} r="1.4" fill="#fff" opacity="0.6" />
+      ))}
+
+      {/* 트랙 */}
+      <line x1={X0} y1={G} x2={X1} y2={G} stroke="#3b4a7a" strokeWidth="3" />
+      <line x1={X0} y1={G} x2={runnerX} y2={G} stroke={C.green} strokeWidth="3" />
+      {[0.25, 0.5, 0.75].map((p) => (
+        <g key={p}>
+          <line x1={X0 + (X1 - X0) * p} y1={G - 4} x2={X0 + (X1 - X0) * p} y2={G + 4} stroke={C.dim} strokeWidth="1.4" />
+          <text x={X0 + (X1 - X0) * p} y={G + 20} fontSize="10.5" fill={C.dim} textAnchor="middle">
+            {p * 100}%
+          </text>
+        </g>
+      ))}
+      {/* 결승선 */}
+      <line x1={X1 + 10} y1={G} x2={X1 + 10} y2={G - 70} stroke="#cbd5e1" strokeWidth="2" />
+      {[0, 1, 2, 3].map((r) =>
+        [0, 1, 2].map((c) => (
+          <rect key={`${r}${c}`} x={X1 + 12 + c * 8} y={G - 70 + r * 6} width="8" height="6" fill={(r + c) % 2 ? '#0b1026' : '#fff'} />
+        )),
+      )}
+      <text x={X1 + 22} y={G - 76} fontSize="11" fontWeight="800" fill="#fbbf24" textAnchor="middle">
+        GOAL
+      </text>
+
+      {/* 유령 */}
+      <g transform={`translate(${ghostX}, ${G})`} className="race-ghost-art">
+        <path d="M-17 -6 L-17 -34 Q-17 -54 0 -54 Q17 -54 17 -34 L17 -6 L11 -12 L6 -6 L0 -12 L-6 -6 L-11 -12 Z" fill={C.purple} opacity="0.92" />
+        <circle cx="-6" cy="-36" r="3.4" fill="#fff" />
+        <circle cx="7" cy="-36" r="3.4" fill="#fff" />
+        <text y="16" fontSize="10" fill={C.purple} textAnchor="middle">
+          가짜 공부
+        </text>
+      </g>
+      {/* 러너 */}
+      <g transform={`translate(${runnerX}, ${G})`} className="race-runner-art">
+        <line x1="-36" y1="-46" x2="-20" y2="-46" stroke={C.dim} strokeWidth="2" strokeLinecap="round" />
+        <line x1="-40" y1="-32" x2="-22" y2="-32" stroke={C.dim} strokeWidth="2" strokeLinecap="round" />
+        <circle cx="2" cy="-56" r="9" fill="#fcd9b6" />
+        <path d="M-7 -60 Q2 -70 11 -60" stroke={C.accent} strokeWidth="4" fill="none" />
+        <rect x="-8" y="-46" width="18" height="24" rx="5" fill={C.accent} />
+        <path d="M-4 -22 L-12 -2 M6 -22 L12 -2" stroke="#334155" strokeWidth="5" strokeLinecap="round" />
+        <path d="M-8 -40 L-16 -30 M10 -40 L18 -48" stroke="#fcd9b6" strokeWidth="4" strokeLinecap="round" />
+      </g>
+
+      {/* 말풍선 */}
+      <g>
+        <rect x={runnerX - 34} y="58" width="68" height="22" rx="11" fill={C.green} />
+        <text x={runnerX} y="73" fontSize="11.5" fontWeight="700" fill="#06210c" textAnchor="middle">
+          영차영차!
+        </text>
+        <rect x={ghostX - 44} y="68" width="88" height="22" rx="11" fill="#2a1d4d" stroke={C.purple} strokeWidth="1.2" />
+        <text x={ghostX} y="83" fontSize="11" fill="#e9d5ff" textAnchor="middle">
+          거기 서~ 흐흐
+        </text>
+      </g>
+
+      {/* 감지 경보 바 */}
+      <rect x="10" y="212" width="540" height="44" rx="12" fill="rgba(233,69,96,0.12)" stroke={C.accent} strokeWidth="1.6" />
+      <text x="28" y="239" fontSize="13" fontWeight="700" fill="#fecaca">
+        🚨 가짜 공부 감지 · 📱 핸드폰 0:24
+      </text>
+      <rect x="418" y="220" width="122" height="28" rx="9" fill="#16a34a" />
+      <text x="479" y="239" fontSize="12.5" fontWeight="800" fill="#fff" textAnchor="middle">
+        💪 정신 차리기
+      </text>
+
+      {/* 통계 칩 */}
+      {stats.map((s, i) => (
+        <g key={s.l} transform={`translate(${10 + i * 137}, 268)`}>
+          <rect width="129" height="52" rx="12" fill={C.panel} stroke={C.line} strokeWidth="1.3" />
+          <text x="64.5" y="20" fontSize="11" fill={C.dim} textAnchor="middle">
+            {s.l}
+          </text>
+          <text x="64.5" y="41" fontSize="16" fontWeight="800" fill={s.c} textAnchor="middle" fontFamily="monospace">
+            {s.v}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/** 사용법 — 계획 → 레이스 → 저장 흐름 */
 export function FlowArt() {
   return (
     <svg viewBox="0 0 560 220" role="img" aria-label="계획 세우기, 타이머 측정, 기록 저장으로 이어지는 흐름">
@@ -465,65 +625,100 @@ export function FlowArt() {
   );
 }
 
-/** STAGE 06 — 대시보드 리포트 + AI 코멘트 */
+/** AI 학습 리포트 — 코치 로봇 말풍선 + 등급 배지, 나 vs 반 평균 추이, 과목 밸런스 */
 export function ReportArt() {
-  const bars = [
-    { g: 58, r: 26 },
-    { g: 74, r: 16 },
-    { g: 40, r: 38 },
-    { g: 88, r: 12 },
-    { g: 66, r: 22 },
-    { g: 96, r: 18 },
-    { g: 80, r: 10 },
+  const me = [40, 52, 46, 64, 58, 76, 84];
+  const avg = [48, 50, 52, 50, 54, 55, 56];
+  const px = (i: number) => 40 + i * 44;
+  const py = (v: number) => 236 - v * 1.1;
+  const line = (a: number[]) => a.map((v, i) => `${i ? 'L' : 'M'}${px(i)} ${py(v).toFixed(1)}`).join(' ');
+  const subjects = [
+    { n: '국어', w: 0.92, c: '#f97316', s: '강점', sc: C.green },
+    { n: '수학', w: 0.74, c: C.purple, s: '좋아요', sc: C.green },
+    { n: '영어', w: 0.46, c: C.blue, s: '조금 더', sc: '#f59e0b' },
+    { n: '과학', w: 0.28, c: '#06b6d4', s: '보강', sc: C.accent },
   ];
-  const days = ['월', '화', '수', '목', '금', '토', '일'];
   return (
-    <svg viewBox="0 0 560 280" role="img" aria-label="주간 순공 시간 그래프와 AI 코멘트">
-      <rect x="14" y="20" width="330" height="200" rx="14" fill={C.panel} stroke={C.line} strokeWidth="1.6" />
-      <text x="34" y="44" fontSize="11" fill={C.dim} letterSpacing="1">주간 순공 / 딴짓</text>
-      {[0, 1, 2, 3].map((i) => (
-        <line key={i} x1="34" y1={64 + i * 34} x2="324" y2={64 + i * 34} stroke={C.line} strokeWidth="1" opacity="0.5" />
+    <svg viewBox="0 0 560 330" role="img" aria-label="코치 로봇이 등급과 함께 말해 주는 AI 학습 리포트, 반 평균 대비 추이와 과목 밸런스">
+      {/* 코치 + 말풍선 + 등급 */}
+      <g transform="translate(16, 14)">
+        <rect width="528" height="78" rx="14" fill={C.panel} stroke={C.line} strokeWidth="1.5" />
+        <g transform="translate(40, 40)">
+          <line x1="0" y1="-26" x2="0" y2="-18" stroke="#94a3b8" strokeWidth="2" />
+          <circle cx="0" cy="-28" r="3.5" fill="#fbbf24" />
+          <rect x="-22" y="-18" width="44" height="36" rx="12" fill="#e2e8f0" />
+          <rect x="-16" y="-10" width="32" height="18" rx="7" fill="#1e293b" />
+          <path d="M-10 -1 q3 -4 6 0 M4 -1 q3 -4 6 0" stroke="#4ade80" strokeWidth="2" fill="none" strokeLinecap="round" />
+        </g>
+        <text x="80" y="32" fontSize="13.5" fontWeight="800" fill="#fff">
+          아주 잘하고 있어요
+        </text>
+        <text x="80" y="54" fontSize="12" fill={C.text}>
+          최근 1주 42시간 공부 · 반 평균보다 <tspan fill={C.green} fontWeight="700">+19시간</tspan>
+        </text>
+        <g transform="translate(476, 39)">
+          <path d="M0 -28 L24 -14 L24 14 L0 28 L-24 14 L-24 -14 Z" fill="rgba(34,197,94,0.16)" stroke={C.green} strokeWidth="2" />
+          <text y="8" fontSize="22" fontWeight="900" fill={C.green} textAnchor="middle">
+            A
+          </text>
+        </g>
+        <text x="420" y="64" fontSize="10.5" fill={C.dim} textAnchor="end">
+          20명 중 5등
+        </text>
+      </g>
+
+      {/* 추이 */}
+      <rect x="16" y="104" width="300" height="212" rx="14" fill={C.panel} stroke={C.line} strokeWidth="1.5" />
+      <text x="34" y="128" fontSize="11.5" fill={C.dim}>
+        공부량 흐름
+      </text>
+      <text x="300" y="128" fontSize="10.5" fill={C.dim} textAnchor="end">
+        <tspan fill={C.accent}>━ 나</tspan>  <tspan fill="#fbbf24">┅ 반 평균</tspan>
+      </text>
+      <path d={`${line(me)} L${px(6)} 236 L${px(0)} 236 Z`} fill="rgba(233,69,96,0.16)" />
+      <path d={line(avg)} fill="none" stroke="#fbbf24" strokeWidth="2" strokeDasharray="5 4" />
+      <path d={line(me)} fill="none" stroke={C.accent} strokeWidth="2.6" />
+      <circle cx={px(6)} cy={py(me[6])} r="5" fill="#fff" stroke={C.accent} strokeWidth="2.4" />
+      {['월', '화', '수', '목', '금', '토', '일'].map((d, i) => (
+        <text key={d} x={px(i)} y="258" fontSize="10.5" fill={C.dim} textAnchor="middle">
+          {d}
+        </text>
       ))}
-      {bars.map((b, i) => {
-        const x = 46 + i * 40;
-        const base = 166;
+      <rect x="34" y="272" width="264" height="32" rx="9" fill="rgba(251,191,36,0.1)" stroke="rgba(251,191,36,0.5)" />
+      <text x="166" y="292" fontSize="11.5" fill="#fde68a" textAnchor="middle">
+        🏅 칭찬 · 집중률 97%, 딴짓 없이 몰입
+      </text>
+
+      {/* 과목 밸런스 */}
+      <rect x="328" y="104" width="216" height="212" rx="14" fill={C.panel} stroke={C.line} strokeWidth="1.5" />
+      <text x="346" y="128" fontSize="11.5" fill={C.dim}>
+        과목 밸런스
+      </text>
+      {subjects.map((s, i) => {
+        const y = 150 + i * 30;
         return (
-          <g key={i}>
-            <rect x={x} y={base - b.r} width="22" height={b.r} rx="4" fill={C.accent} opacity="0.8" />
-            <rect x={x} y={base - b.r - b.g} width="22" height={b.g} rx="4" fill={C.green} opacity="0.85" />
-            <text x={x + 11} y={186} fontSize="10" fill={C.dim} textAnchor="middle">{days[i]}</text>
+          <g key={s.n}>
+            <text x="346" y={y + 4} fontSize="11.5" fill={s.c} fontWeight="700">
+              {s.n}
+            </text>
+            <rect x="380" y={y - 5} width="104" height="10" rx="5" fill="#1b2545" />
+            <rect x="380" y={y - 5} width={104 * s.w} height="10" rx="5" fill={s.c} />
+            <line x1="440" y1={y - 8} x2="440" y2={y + 8} stroke="#fff" strokeWidth="1.4" opacity="0.7" />
+            <text x="530" y={y + 4} fontSize="10.5" fill={s.sc} textAnchor="end" fontWeight="700">
+              {s.s}
+            </text>
           </g>
         );
       })}
-      <path
-        d={bars.map((b, i) => `${i === 0 ? 'M' : 'L'}${57 + i * 40} ${166 - b.g - b.r - 12}`).join(' ')}
-        fill="none"
-        stroke="#60a5fa"
-        strokeWidth="2"
-        strokeDasharray="4 4"
-        opacity="0.8"
-      />
-      <text x="34" y="206" fontSize="10" fill="#60a5fa">--- 반 평균</text>
-
-      <rect x="360" y="20" width="186" height="200" rx="14" fill="#1a1a40" stroke={C.line} strokeWidth="1.6" />
-      <text x="382" y="46" fontSize="11" fill={C.accent} letterSpacing="1">AI 코멘트</text>
-      {[
-        '수학은 목표를 넘겼어요 👏',
-        '영어가 3일째 20분 미만이에요.',
-        '핸드폰 시간이 어제보다',
-        '12분 줄었습니다.',
-        '',
-        '내일은 영어부터 시작해볼까요?',
-      ].map((t, i) => (
-        <text key={i} x="382" y={74 + i * 22} fontSize="12" fill={t.includes('?') ? C.text : '#ccc'}>
-          {t}
-        </text>
-      ))}
+      <rect x="342" y="272" width="188" height="32" rx="9" fill="rgba(56,189,248,0.1)" stroke="rgba(56,189,248,0.5)" />
+      <text x="436" y="292" fontSize="11.5" fill="#bae6fd" textAnchor="middle">
+        🎯 미션 · 과학 하루 18분 더
+      </text>
     </svg>
   );
 }
 
-/** STAGE 07 — 영상은 브라우저 밖으로 나가지 않는다 */
+/** 프라이버시 — 영상은 기기 밖으로 나가지 않는다 */
 export function PrivacyArt() {
   return (
     <svg viewBox="0 0 560 220" role="img" aria-label="웹캠 영상이 브라우저 밖으로 전송되지 않음">

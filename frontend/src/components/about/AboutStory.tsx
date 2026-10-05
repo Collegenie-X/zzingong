@@ -16,11 +16,12 @@ import {
   HeroKeyArt,
   HeroKeyArtNarrow,
   PrivacyArt,
+  RaceArt,
   ReportArt,
   RhythmArt,
-  WebcamArt,
+  VisionArt,
 } from './illustrations';
-import type { AboutContent, ArtKey, Block, Cta } from './types';
+import type { AboutContent, ArtKey, Block, Cta, FoldItem, PipelineStatus } from './types';
 
 const { hero, stages, outro, nav } = content as unknown as AboutContent;
 
@@ -29,10 +30,17 @@ const ART: Record<ArtKey, () => React.ReactElement> = {
   hero: HeroArt,
   fakeStudy: FakeStudyArt,
   rhythm: RhythmArt,
-  webcam: WebcamArt,
+  vision: VisionArt,
+  race: RaceArt,
   flow: FlowArt,
   report: ReportArt,
   privacy: PrivacyArt,
+};
+
+const STATUS_LABEL: Record<PipelineStatus, string> = {
+  web: '웹 · 지금 동작',
+  app: '모바일 · ML Kit',
+  both: '웹 + 모바일',
 };
 
 function CtaLinks({ items }: { items: Cta[] }) {
@@ -46,6 +54,85 @@ function CtaLinks({ items }: { items: Cta[] }) {
     </div>
   );
 }
+
+/** 펼친 내용: 문단 + 점 목록 */
+function FoldBody({ body, points }: { body?: string; points?: string[] }) {
+  return (
+    <>
+      {body && <p className="fold-text">{hl(body)}</p>}
+      {points && points.length > 0 && (
+        <ul className="fold-points">
+          {points.map((pt) => (
+            <li key={pt}>{hl(pt)}</li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+
+/** 요약 한 줄 → 눌러서 세부 설명. 네이티브 <details> 라 키보드·스크린리더로도 열립니다 */
+function Fold({ item }: { item: FoldItem }) {
+  return (
+    <details className="fold">
+      <summary>
+        {item.icon && (
+          <span className="fold-icon" aria-hidden>
+            {item.icon}
+          </span>
+        )}
+        <span className="fold-head">
+          <strong>{item.title}</strong>
+          <span className="fold-sum">{hl(item.summary)}</span>
+        </span>
+        <span className="fold-chev" aria-hidden />
+      </summary>
+      <div className="fold-body">
+        <FoldBody body={item.body} points={item.points} />
+      </div>
+    </details>
+  );
+}
+
+/** 스테이지 안의 접이식 항목을 한 번에 열고 닫습니다 */
+function FoldAll() {
+  const ref = useRef<HTMLButtonElement>(null);
+  const [allOpen, setAllOpen] = useState(false);
+
+  useEffect(() => {
+    const stage = ref.current?.closest('.stage');
+    if (!stage) return;
+    // 하나씩 열고 닫아도 버튼 문구가 맞도록 toggle 이벤트(버블 안 됨)를 캡처로 받습니다
+    const sync = () => {
+      const all = Array.from(stage.querySelectorAll('details'));
+      setAllOpen(all.length > 0 && all.every((d) => d.open));
+    };
+    stage.addEventListener('toggle', sync, true);
+    return () => stage.removeEventListener('toggle', sync, true);
+  }, []);
+
+  const toggle = () => {
+    const stage = ref.current?.closest('.stage');
+    stage?.querySelectorAll('details').forEach((d) => {
+      d.open = !allOpen;
+    });
+  };
+
+  return (
+    <button ref={ref} type="button" className="fold-all" onClick={toggle} aria-pressed={allOpen}>
+      {allOpen ? '세부 설명 모두 접기' : '세부 설명 모두 펼치기'}
+      <span className={`fold-chev${allOpen ? ' up' : ''}`} aria-hidden />
+    </button>
+  );
+}
+
+const hasFolds = (blocks: Block[]) =>
+  blocks.some(
+    (b) =>
+      b.type === 'pipeline' ||
+      b.type === 'accordion' ||
+      (b.type === 'definitions' && b.items.some((it) => it.points?.length)),
+  );
 
 function BlockView({ block }: { block: Block }) {
   switch (block.type) {
@@ -83,12 +170,29 @@ function BlockView({ block }: { block: Block }) {
     case 'definitions':
       return (
         <ul className="rhythm-list">
-          {block.items.map((it) => (
-            <li key={it.term}>
-              <strong>{it.term}</strong>
-              <span>{hl(it.desc)}</span>
-            </li>
-          ))}
+          {block.items.map((it) =>
+            it.points?.length ? (
+              <li key={it.term} className="has-fold">
+                <details className="fold plain">
+                  <summary>
+                    <span className="fold-head">
+                      <strong>{it.term}</strong>
+                      <span className="fold-sum">{hl(it.desc)}</span>
+                    </span>
+                    <span className="fold-chev" aria-hidden />
+                  </summary>
+                  <div className="fold-body">
+                    <FoldBody points={it.points} />
+                  </div>
+                </details>
+              </li>
+            ) : (
+              <li key={it.term}>
+                <strong>{it.term}</strong>
+                <span>{hl(it.desc)}</span>
+              </li>
+            ),
+          )}
         </ul>
       );
     case 'steps':
@@ -114,6 +218,64 @@ function BlockView({ block }: { block: Block }) {
             <span>{hl(block.text)}</span>
           </div>
         </div>
+      );
+    case 'pipeline':
+      return (
+        <ol className="pipeline">
+          {block.items.map((it, i) => (
+            <li key={it.title} className={it.status}>
+              <details className="fold plain">
+                <summary>
+                  <span className="pl-icon" aria-hidden>
+                    {it.icon}
+                  </span>
+                  <span className="pl-body">
+                    <span className="pl-head">
+                      <span className="pl-n">{String(i + 1).padStart(2, '0')}</span>
+                      <strong>{it.title}</strong>
+                      <span className={`pl-status ${it.status}`}>{STATUS_LABEL[it.status]}</span>
+                    </span>
+                    <span className="fold-sum">{hl(it.summary)}</span>
+                  </span>
+                  <span className="fold-chev" aria-hidden />
+                </summary>
+                <div className="fold-body pl-more">
+                  <code className="pl-api">{it.api}</code>
+                  <p className="pl-desc">{hl(it.desc)}</p>
+                  <FoldBody points={it.points} />
+                </div>
+              </details>
+            </li>
+          ))}
+        </ol>
+      );
+    case 'accordion':
+      return (
+        <>
+          {block.title && <p className="fake-title">{hl(block.title)}</p>}
+          <div className="folds">
+            {block.items.map((it) => (
+              <Fold key={it.title} item={it} />
+            ))}
+          </div>
+        </>
+      );
+    case 'tiles':
+      return (
+        <>
+          {block.title && <p className="fake-title">{hl(block.title)}</p>}
+          <ul className="tiles">
+            {block.items.map((it) => (
+              <li key={it.title}>
+                <span className="tile-icon" aria-hidden>
+                  {it.icon}
+                </span>
+                <strong>{it.title}</strong>
+                <span>{hl(it.desc)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
       );
   }
 }
@@ -259,10 +421,21 @@ export default function AboutStory() {
                   <span key={line}>{line}</span>
                 ))}
               </h2>
+              {s.summary && (
+                <div className="stage-summary">
+                  <span className="label">핵심 요약</span>
+                  <ul>
+                    {s.summary.map((line) => (
+                      <li key={line}>{hl(line)}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <p className="stage-lead">{hl(s.lead)}</p>
               <div className="stage-art">
                 <Art />
               </div>
+              {hasFolds(s.blocks) && <FoldAll />}
               {s.blocks.map((b, bi) => (
                 <BlockView key={bi} block={b} />
               ))}
