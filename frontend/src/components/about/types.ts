@@ -1,6 +1,7 @@
 // ── 소개 페이지 콘텐츠(src/data/about.json) 타입 ──
 
 export type ArtKey =
+  | 'overview'
   | 'heroKey'
   | 'hero'
   | 'fakeStudy'
@@ -38,6 +39,8 @@ export type Block =
       }[];
     }
   | { type: 'accordion'; title?: string; items: FoldItem[] }
+  /** 큰 글씨 결론 문장 (줄마다 한 줄씩) */
+  | { type: 'statement'; label: string; lines: string[] }
   | { type: 'tiles'; title?: string; items: { icon: string; title: string; desc: string }[] };
 
 /** 열고 닫는 항목: 접혀 있으면 summary 만, 펼치면 body + points */
@@ -63,7 +66,8 @@ export interface Stage {
   /** 제목 아래 "핵심 요약" 상자 (2~3줄) */
   summary?: string[];
   lead: string;
-  art: ArtKey;
+  /** 일러스트가 없는 스테이지(결론 등)는 생략 */
+  art?: ArtKey;
   blocks: Block[];
 }
 

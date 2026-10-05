@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import content from '@/data/about.json';
 import { hl } from './Highlight';
+import OverviewMap from './OverviewMap';
 import {
   FakeStudyArt,
   FlowArt,
@@ -26,6 +27,7 @@ import type { AboutContent, ArtKey, Block, Cta, FoldItem, PipelineStatus } from 
 const { hero, stages, outro, nav } = content as unknown as AboutContent;
 
 const ART: Record<ArtKey, () => React.ReactElement> = {
+  overview: OverviewMap,
   heroKey: HeroKeyArt,
   hero: HeroArt,
   fakeStudy: FakeStudyArt,
@@ -249,6 +251,15 @@ function BlockView({ block }: { block: Block }) {
           ))}
         </ol>
       );
+    case 'statement':
+      return (
+        <div className="statement">
+          <span className="label">{block.label}</span>
+          {block.lines.map((line) => (
+            <p key={line}>{hl(line)}</p>
+          ))}
+        </div>
+      );
     case 'accordion':
       return (
         <>
@@ -292,6 +303,34 @@ export default function AboutStory() {
   const [stuck, setStuck] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const chipsRef = useRef<HTMLDivElement>(null);
+  const [moreRight, setMoreRight] = useState(false);
+
+  // 칩이 넘치는 화면에서는 현재 스테이지 칩이 보이도록 가로 스크롤을 맞추고, 오른쪽에 더 있으면 표시합니다
+  useEffect(() => {
+    const box = chipsRef.current;
+    if (!box) return;
+    const on = box.querySelector<HTMLElement>('a.on');
+    if (on) {
+      const left = on.offsetLeft - box.offsetLeft;
+      if (left < box.scrollLeft || left + on.offsetWidth > box.scrollLeft + box.clientWidth) {
+        box.scrollTo({ left: left - box.clientWidth / 2 + on.offsetWidth / 2, behavior: 'smooth' });
+      }
+    }
+  }, [active]);
+
+  useEffect(() => {
+    const box = chipsRef.current;
+    if (!box) return;
+    const sync = () => setMoreRight(box.scrollLeft + box.clientWidth < box.scrollWidth - 4);
+    sync();
+    box.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    return () => {
+      box.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+    };
+  }, []);
 
   // ── 스크롤에 따라 현재 스테이지 표시 + 등장 애니메이션 ──
   useEffect(() => {
@@ -383,7 +422,7 @@ export default function AboutStory() {
       <div ref={sentinelRef} className="stage-nav-sentinel" aria-hidden />
       <nav className={`stage-nav${stuck ? ' stuck' : ''}`} aria-label={nav.label}>
         <div className="stage-nav-inner">
-          <div className="stage-nav-chips">
+          <div ref={chipsRef} className={`stage-nav-chips${moreRight ? ' more-right' : ''}`}>
             {stages.map((s, i) => (
               <a
                 key={s.id}
@@ -408,7 +447,7 @@ export default function AboutStory() {
 
       {/* ── 스토리 ── */}
       {stages.map((s, i) => {
-        const Art = ART[s.art];
+        const Art = s.art ? ART[s.art] : null;
         return (
           <section className="stage" id={s.id} key={s.id}>
             <div className="stage-inner reveal">
@@ -418,7 +457,7 @@ export default function AboutStory() {
               </p>
               <h2>
                 {s.title.map((line) => (
-                  <span key={line}>{line}</span>
+                  <span key={line}>{hl(line)}</span>
                 ))}
               </h2>
               {s.summary && (
@@ -432,9 +471,11 @@ export default function AboutStory() {
                 </div>
               )}
               <p className="stage-lead">{hl(s.lead)}</p>
-              <div className="stage-art">
-                <Art />
-              </div>
+              {Art && (
+                <div className="stage-art">
+                  <Art />
+                </div>
+              )}
               {hasFolds(s.blocks) && <FoldAll />}
               {s.blocks.map((b, bi) => (
                 <BlockView key={bi} block={b} />

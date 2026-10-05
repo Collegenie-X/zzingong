@@ -182,6 +182,20 @@
   background: linear-gradient(transparent 56%, rgba(233, 69, 96, 0.42) 56%);
 }
 
+/* 영역 제목 강조: 굵은 형광펜 + 그라데이션 글자 */
+.about .stage h2 mark {
+  /* 좌우 여백은 음수 마진으로 상쇄해 뒤따르는 조사('를', '가')와 붙어 보이게 */
+  padding: 0 3px;
+  margin: 0 -3px;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 800;
+  background: linear-gradient(transparent 60%, rgba(233, 69, 96, 0.5) 60%, rgba(249, 115, 22, 0.45) 92%, transparent 92%);
+}
+.about .fake-title mark {
+  background: linear-gradient(transparent 58%, rgba(233, 69, 96, 0.42) 58%);
+}
+
 /* ── 스테이지 내비 ── */
 .stage-nav {
   position: sticky;
@@ -209,7 +223,7 @@
 .stage-nav-sentinel { height: 0; }
 
 .stage-nav-inner {
-  max-width: 960px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 9px 16px;
   display: flex;
@@ -220,11 +234,13 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  gap: 6px;
+  gap: 2px;
   overflow-x: auto;
   scrollbar-width: none;
 }
 .stage-nav-chips::-webkit-scrollbar { display: none; }
+/* 칩이 넘칠 때 오른쪽이 잘린 게 아니라 더 있다는 걸 알 수 있도록 가장자리를 흐리게 */
+.stage-nav-chips.more-right { -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); }
 
 /* 오른쪽 끝 CTA — 상단 고정되면 채워진 버튼으로 강조 */
 .stage-nav-cta {
@@ -269,10 +285,10 @@
   flex-shrink: 0;
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
-  padding: 6px 13px;
+  gap: 5px;
+  padding: 6px 9px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--dim);
   text-decoration: none;
   border: 1px solid transparent;
@@ -479,6 +495,11 @@
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 8px;
 }
+/* 타일이 딱 4개면 넓은 화면에서 한 줄로 */
+@media (min-width: 721px) {
+  .tiles:has(> li:nth-child(4):last-child) { grid-template-columns: repeat(4, 1fr); }
+  .tiles:has(> li:nth-child(4):last-child) > li { padding: 14px 13px; }
+}
 .fake-title + .tiles { margin-top: 12px; }
 .stage-art + .tiles, .pipeline + .tiles { margin-top: 22px; }
 .tiles li {
@@ -637,6 +658,151 @@
 }
 .rhythm-list > li.has-fold { padding: 0; }
 
+/* ── 전체 순서도 (OverviewMap, 커스텀 SVG) ── */
+.ov-art svg { overflow: visible; }
+/* 순서도는 본문 폭(880px)보다 넓게 펼쳐 크게 보여 줍니다 */
+@media (min-width: 900px) {
+  .stage-art:has(.ov-art) {
+    width: min(1180px, calc(100vw - 48px));
+    margin-left: 50%;
+    transform: translateX(-50%);
+    padding: 24px;
+  }
+}
+/* SVG 글자 강조 (==단어==) */
+.ov-em { fill: #ffd166; font-weight: 800; }
+.about .ov-lap mark { background: linear-gradient(transparent 58%, rgba(251, 191, 36, 0.3) 58%); }
+.about .ov-lap-hint mark { background: none; color: #fbbf24; }
+.ov-art .narrow { display: none; }
+@media (max-width: 720px) {
+  .ov-art .wide { display: none; }
+  .ov-art .narrow { display: block; max-width: 400px; margin: 0 auto; }
+}
+/* 화살표가 진행 방향으로 흐릅니다 */
+.ov-edge {
+  stroke: #6f7fae;
+  stroke-dasharray: 7 6;
+  animation: ov-flow 0.9s linear infinite;
+}
+.ov-edge.pass { stroke: #38bdf8; }
+.ov-edge.loop { stroke: #c2607a; }
+@keyframes ov-flow { to { stroke-dashoffset: -13; } }
+.ov-node { cursor: pointer; }
+.ov-node > rect:first-child { transition: stroke 0.2s; }
+.ov-node:hover > rect:first-child { stroke: var(--accent); }
+.ov-node:focus-visible { outline: none; }
+.ov-node:focus-visible > rect:first-child { stroke: #fff; stroke-width: 2.4; }
+
+/* 한 바퀴 돌 때마다 나아지는 수치 */
+.ov-lap {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(15, 15, 35, 0.7);
+  border: 1px solid var(--line);
+}
+.ov-lap-head { display: flex; align-items: center; gap: 10px; }
+.ov-lap-n {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--ink);
+  animation: ov-pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.ov-lap-n b { font-size: 1.15rem; color: #fbbf24; margin-right: 2px; }
+@keyframes ov-pop {
+  from { transform: scale(1.35); color: #fbbf24; }
+  to { transform: none; }
+}
+.ov-lap-dots { display: flex; gap: 5px; }
+.ov-lap-dots i {
+  width: 18px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  transition: background 0.4s;
+}
+.ov-lap-dots i.on { background: #fbbf24; }
+.ov-lap-hint { margin-left: auto; font-size: 0.68rem; color: var(--faint); }
+.ov-lap-stats {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 18px;
+}
+.ov-lap-stat {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 5px 8px;
+}
+.ov-lap-stat .l { font-size: 0.72rem; color: var(--dim); }
+.ov-lap-stat .v {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.ov-lap-stat .v em {
+  font-style: normal;
+  font-size: 0.68rem;
+  margin-left: 5px;
+  color: #4ade80;
+}
+.ov-lap-stat .bar {
+  grid-column: 1 / -1;
+  height: 7px;
+  border-radius: 4px;
+  background: #1b2545;
+  overflow: hidden;
+}
+.ov-lap-stat .bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  transition: width 0.9s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.ov-lap-stat .bar.fake i { background: linear-gradient(90deg, #a855f7, #e94560); }
+.ov-lap-stat .bar.rank i { background: linear-gradient(90deg, #38bdf8, #8ab4ff); }
+
+/* ── 결론 문장 ── */
+.statement {
+  margin-top: 26px;
+  padding: 24px 22px;
+  border-radius: 18px;
+  text-align: center;
+  background:
+    radial-gradient(80% 120% at 50% 0%, rgba(233, 69, 96, 0.18), transparent 70%),
+    rgba(19, 28, 52, 0.7);
+  border: 1px solid rgba(233, 69, 96, 0.45);
+}
+.statement .label {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--accent);
+  border: 1px solid rgba(233, 69, 96, 0.5);
+  border-radius: 999px;
+  padding: 3px 12px;
+  margin-bottom: 14px;
+}
+.statement p {
+  font-size: clamp(1.02rem, 2.6vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.75;
+  color: var(--dim);
+}
+.about .statement mark {
+  padding: 0 3px;
+  margin: 0 -3px;
+  color: #fff;
+  background: linear-gradient(transparent 60%, rgba(233, 69, 96, 0.5) 60%, rgba(249, 115, 22, 0.45) 92%, transparent 92%);
+}
+
 .note {
   margin-top: 18px;
   font-size: 0.8rem;
@@ -697,6 +863,12 @@
   .tiles { grid-template-columns: 1fr 1fr; }
 }
 
+@media (max-width: 720px) {
+  .ov-lap-stats { grid-template-columns: 1fr; }
+  .ov-lap-hint { display: none; }
+  .statement { padding: 20px 16px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stage-inner, .about-outro { opacity: 1; transform: none; transition: none; }
   .scroll-hint .line,
@@ -706,6 +878,8 @@
   .stage-art .vision-rec,
   .stage-art .race-runner-art > *,
   .stage-art .race-ghost-art > path,
+  .ov-edge,
+  .ov-lap-n,
   .fold-body { animation: none; }
 }
 
