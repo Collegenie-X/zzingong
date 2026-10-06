@@ -6,6 +6,10 @@
 // - NoteIcon: 칭찬 스티커 / 미션 깃발
 // - TrendChart: 나 vs 반 평균 꺾은선
 
+import { useState } from 'react';
+import { usePopover } from '@/hooks/usePopover';
+import { fmtMinKorean } from '@/lib/format';
+
 const INK = '#0b1220';
 
 export type BotMood = 'cheer' | 'smile' | 'worry' | 'idle';
@@ -194,9 +198,27 @@ export function TrendChart({ mine, avg, labels }: TrendProps) {
   // 라벨은 최대 7개만
   const step = Math.ceil(n / 7);
 
+  // 마우스를 올리면 안내선, 클릭하면 그 위치에 수치 팝업 고정
+  const [hover, setHover] = useState<number | null>(null);
+  const pop = usePopover<number>();
+  const pinned = pop.value;
+  const indexAt = (e: React.PointerEvent | React.MouseEvent) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1);
+    return n > 1 ? Math.round(ratio * (n - 1)) : 0;
+  };
+
+  const guide = pinned ?? hover;
+
   return (
     <div className="rp-trend">
-      <div className="rp-trend-plot">
+      <div
+        className="rp-trend-plot"
+        ref={pop.ref}
+        onPointerMove={(e) => e.pointerType === 'mouse' && setHover(indexAt(e))}
+        onPointerLeave={() => setHover(null)}
+        onClick={(e) => pop.toggle(indexAt(e))}
+      >
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
           <defs>
             <linearGradient id="rp-area" x1="0" y1="0" x2="0" y2="1">
@@ -214,6 +236,30 @@ export function TrendChart({ mine, avg, labels }: TrendProps) {
         {dots && mine.map((v, i) => (
           <i key={i} className={`rp-dot${i === n - 1 ? ' last' : ''}`} style={{ left: `${x(i)}%`, top: `${y(v)}%` }} />
         ))}
+        {guide !== null && (
+          <>
+            <i className="rp-hover-line" style={{ left: `${x(guide)}%` }} />
+            <i className="rp-hover-dot avg" style={{ left: `${x(guide)}%`, top: `${y(avg[guide])}%` }} />
+            <i className="rp-hover-dot" style={{ left: `${x(guide)}%`, top: `${y(mine[guide])}%` }} />
+          </>
+        )}
+        {pinned !== null && (
+          <div
+            key={pinned}
+            role="dialog"
+            aria-label={`${labels[pinned]} 공부량`}
+            onClick={(e) => e.stopPropagation()}
+            className={`rp-tip${pop.closing ? ' closing' : ''}${x(pinned) > 70 ? ' left' : x(pinned) < 30 ? ' right' : Math.min(y(mine[pinned]), y(avg[pinned])) < 40 ? ' below' : ''}`}
+            style={{ left: `${x(pinned)}%`, top: `${Math.min(Math.max(Math.min(y(mine[pinned]), y(avg[pinned])), 20), 80)}%` }}
+          >
+            <div className="rp-tip-date">
+              {labels[pinned]}
+              <button type="button" className="pop-close" aria-label="닫기" onClick={pop.close}>×</button>
+            </div>
+            <div><i className="lg-me" />나 <b>{fmtMinKorean(mine[pinned])}</b></div>
+            <div><i className="lg-avg" />반 평균 <b>{fmtMinKorean(avg[pinned])}</b></div>
+          </div>
+        )}
         <span className="rp-trend-max">{Math.round(hiV)}분</span>
         {min > 0 && <span className="rp-trend-min">{Math.round(loV)}분</span>}
       </div>

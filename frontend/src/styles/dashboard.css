@@ -111,6 +111,17 @@
 .rp-trend-max, .rp-trend-min { position: absolute; left: -4px; font-size: 0.62rem; color: #475569; }
 .rp-trend-max { top: 2px; }
 .rp-trend-min { bottom: 2px; }
+.rp-trend-plot { cursor: pointer; touch-action: pan-y; }
+.rp-hover-line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(148, 163, 184, 0.45); pointer-events: none; }
+.rp-hover-dot { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #e94560; border: 2px solid #fff; box-sizing: border-box; pointer-events: none; }
+.rp-hover-dot.avg { background: #fbbf24; }
+.rp-tip { position: absolute; z-index: 5; transform: translate(-50%, calc(-100% - 12px)); padding: 6px 9px; border-radius: 8px; background: rgba(15, 23, 42, 0.96); border: 1px solid #334155; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); font-size: 0.7rem; color: #cbd5e1; white-space: nowrap; line-height: 1.6; cursor: default; }
+.rp-tip.left { transform: translate(calc(-100% - 10px), -50%); }
+.rp-tip.right { transform: translate(10px, -50%); }
+.rp-tip.below { transform: translate(-50%, 12px); }
+.rp-tip-date { display: flex; align-items: center; font-weight: 700; color: #f1f5f9; margin-bottom: 2px; }
+.rp-tip b { color: #f1f5f9; margin-left: 4px; }
+.rp-tip i { display: inline-block; vertical-align: middle; margin-right: 5px; }
 .rp-trend-x { position: relative; height: 16px; margin-top: 6px; }
 .rp-trend-x span { position: absolute; transform: translateX(-50%); font-size: 0.62rem; color: #64748b; white-space: nowrap; }
 

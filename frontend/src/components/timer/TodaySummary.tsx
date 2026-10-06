@@ -9,6 +9,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Castle, Gem, Heart, Hero, Runner, type Mood } from '@/components/game/GameIcons';
+import { usePopover } from '@/hooks/usePopover';
 import { fmtKorean, pct } from '@/lib/format';
 import type { SessionRecord, Subject } from '@/lib/types';
 
@@ -44,6 +45,9 @@ const timeOf = (iso: string) =>
 
 export default function TodaySummary({ studentId, sessions, subjects, selected }: Props) {
   const [open, setOpen] = useState<string | null>(null);
+  // 여정 막대에서 누른 구간 (과목 이름 또는 남은 길 '__rest')
+  const pop = usePopover<string>();
+  const tip = pop.value;
 
   if (!studentId) {
     return (
@@ -82,11 +86,19 @@ export default function TodaySummary({ studentId, sessions, subjects, selected }
   const sum = (list: SessionRecord[] | undefined, key: 'duration_seconds' | 'distraction_seconds') =>
     (list ?? []).reduce((a, s) => a + s[key], 0);
   const scale = Math.max(goalSec, study, 1);
+  let acc = 0;
   const segs = [...bySubj].map(([name, list]) => {
     const sec = sum(list, 'duration_seconds');
-    return { name, sec, color: colorOf(name), w: (sec / scale) * 100 };
+    const w = (sec / scale) * 100;
+    const start = acc;
+    acc += w;
+    const goal = (subjects.find((s) => s.name === name)?.goal_minutes ?? 0) * 60;
+    return { name, sec, goal, color: colorOf(name), w, mid: start + w / 2 };
   });
   const pos = Math.min(100, (study / scale) * 100);
+  const toggleTip = pop.toggle;
+  const tipSeg = segs.find((s) => s.name === tip);
+  const tipAt = tipSeg ? tipSeg.mid : tip === '__rest' ? (pos + 100) / 2 : 0;
 
   // 집중력 하트: 20%당 한 칸, 반 칸 단위
   const hp = Math.round((focus / 100) * HEARTS * 2) / 2;
@@ -136,16 +148,26 @@ export default function TodaySummary({ studentId, sessions, subjects, selected }
             딴짓 <b>{fmtKorean(distraction)}</b>
           </span>
         </div>
-        <div className="tsb-journey">
+        <div className="tsb-journey" ref={pop.ref}>
           <div className="tsb-road">
             {segs.map((s) => (
-              <div
+              <button
                 key={s.name}
-                className="seg"
+                type="button"
+                className={`seg${tip === s.name ? ' on' : ''}`}
                 style={{ width: `${s.w}%`, background: s.color }}
-                title={`${s.name} ${fmtKorean(s.sec)}`}
+                aria-label={`${s.name} ${fmtKorean(s.sec)}`}
+                onClick={() => toggleTip(s.name)}
               />
             ))}
+            {!cleared && goalSec > 0 && (
+              <button
+                type="button"
+                className={`seg rest${tip === '__rest' ? ' on' : ''}`}
+                aria-label={`성까지 ${fmtKorean(left)}`}
+                onClick={() => toggleTip('__rest')}
+              />
+            )}
             {[25, 50, 75].map((t) => (
               <span key={t} className={`tick${pos >= t ? ' passed' : ''}`} style={{ left: `${t}%` }} />
             ))}
@@ -154,6 +176,48 @@ export default function TodaySummary({ studentId, sessions, subjects, selected }
             <Runner size={28} />
           </div>
           <Castle size={34} reached={cleared} className="tsb-castle" />
+          {tip !== null && (tipSeg || tip === '__rest') && (
+            <div className="tsb-road-pop">
+              <div
+                key={tip}
+                role="dialog"
+                aria-label={tipSeg ? `${tipSeg.name} 기록` : '성까지 남은 시간'}
+                className={`tsb-pop${pop.closing ? ' closing' : ''}${tipAt < 15 ? ' at-start' : tipAt > 85 ? ' at-end' : ''}`}
+                style={{ left: `${tipAt}%` }}
+              >
+                {tipSeg ? (
+                  <>
+                    <div className="tsb-pop-title">
+                      <span className="dot" style={{ background: tipSeg.color }} />
+                      {tipSeg.name}
+                      <button type="button" className="pop-close" aria-label="닫기" onClick={pop.close}>×</button>
+                    </div>
+                    <div>
+                      순공 <b>{fmtKorean(tipSeg.sec)}</b> · 오늘의 {pct(tipSeg.sec, study)}%
+                    </div>
+                    {tipSeg.goal > 0 && (
+                      <div className="muted">
+                        목표 {fmtKorean(tipSeg.goal)} 중 {pct(tipSeg.sec, tipSeg.goal)}%
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="tsb-pop-title">
+                      🏰 성까지
+                      <button type="button" className="pop-close" aria-label="닫기" onClick={pop.close}>×</button>
+                    </div>
+                    <div>
+                      남은 시간 <b>{fmtKorean(left)}</b>
+                    </div>
+                    <div className="muted">
+                      목표 {fmtKorean(goalSec)} 중 {rate}% 달성
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
